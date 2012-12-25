@@ -15,6 +15,7 @@ class Timer {
 	std::map<std::string, double> nick_cpu, nick_real;
 	timespec cpu, real;
 	Printer* printer;
+	void macroparameters ();
 public:
 	Writer* writer;
 	Timer (Printer*, Writer*, const Boxes&);

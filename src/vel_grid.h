@@ -10,7 +10,7 @@
 class Scalar {															// scalar type for vel_grid arithmetic
 	const real value;
 public:
-	Scalar (real v) : value (v) { }										// use as implicit constructor
+	Scalar (real v) : value (v) { }									// use as implicit constructor
 	real operator[] (int) const { return value; }
 	operator real () { return value; }
 };
@@ -26,11 +26,11 @@ public:
 
 class Half_grid;
 template<class> class Expr;												// expression for vel_grid arithmetic
-template<class> class All_grid;											// container for copy all vel_grid
+template<class> class All_grid;										// container for copy all vel_grid
 class Vel_grid {														// velocity grid
 	friend class Half_grid;
 	static real cut, dV;												// cutting velocity and volume of velocity cell
-	static std::valarray<real> vel;										// 1D arrays of velocity grid
+	static std::valarray<real> vel;									// 1D array of velocity grid
 	const Mapper& m;													// reference to mapper
 	std::valarray<real>* v;												// data container
 public:
@@ -61,7 +61,7 @@ public:
 	static void set_cut (real);
 	static Vector velocity (Axis axis) { return Vector (axis, vel); }
 	static real cut_vel () { return cut; }
-	static const std::valarray<real>& vel_grid () { return vel; }
+	static const std::valarray<real>& vel_array () { return vel; }
 private:
 	Vel_grid (const Vel_grid&);											// prohibited copy constructor
 	friend void swap (Vel_grid&, Vel_grid&);

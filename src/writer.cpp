@@ -73,9 +73,15 @@ void Writer::write_f (int time)
 		std::ofstream file (path.string ());
 		if (file.fail ()) throw std::runtime_error ("Cannot write files with distribution function");
 
+		char delim = ' ';
+		file << mapper ().radius () << delim <<  Vel_grid::cut_vel () << std::endl;
 		const Int_vect& pp = it->second;
-		for_each (box->f->all () (pp), [&file] (Int_vect r, real dist_fun) {
-			for (int ax=0; ax<3; ax++) file << Vel_grid::vel_grid () [r[ax]] << ' ';
+		auto& node = box->features->all () (pp);
+		file << node.dens << delim << node.temp << std::endl;
+		for (int ax=0; ax<3; ax++) file << node.flow[ax] << delim;
+		file << std::endl << std::endl;
+		for_each (box->f->all () (pp), [&file, delim] (Int_vect r, real dist_fun) {
+			for (int ax=0; ax<3; ax++) file << Vel_grid::vel_array () [r[ax]] << delim;
 			file << dist_fun << std::endl;
 		});
 		num++;

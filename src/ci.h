@@ -13,12 +13,6 @@
 
 #define USE_DOUBLE
 
-#ifdef USE_FLOAT
-typedef float real;
-#endif
-#ifdef USE_DOUBLE
-typedef double real;
-#endif
 
 // устанавливает приблизительный объём сетки Коробова
 void set_power (int pow);

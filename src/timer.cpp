@@ -10,6 +10,13 @@ Timer::Timer (Printer* pr, Writer* wr, const Boxes& b) : boxes (b), counter (0),
 	nick ("init");
 }
 
+void Timer::macroparameters ()
+{
+	nick ("macro");
+	printer->result (writer->write_result (counter));
+	writer->write_f (counter);
+}
+
 bool Timer::begin ()
 {
 	if (counter == 0) {
@@ -18,10 +25,10 @@ bool Timer::begin ()
 		printer->task ("Loading data");
 		printer->result (writer->load_f (counter));
 		printer->var ("Initial time", counter);
+
 		printer->title ("Begin of iterations");
-		nick ("macro");
 		printer->task ("Saving initial macroparameters");
-		printer->result (writer->write_result (counter));
+		macroparameters();
 	}
 	nick_cpu.clear ();
 	nick_real.clear ();
@@ -33,9 +40,7 @@ void Timer::end ()
 	MPI_Barrier (MPI_COMM_WORLD);
 	if (counter % macro == 0) {
 		printer->task ("Saving macroparameters");
-		nick ("macro");
-		printer->result (writer->write_result (counter));
-		writer->write_f (counter);
+		macroparameters ();
 	}
 	if (counter % cache == 0) {
 		printer->task ("Saving distribution function");

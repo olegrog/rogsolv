@@ -20,7 +20,7 @@ void couette (Manager& manager)
 	Box::init_cond = arbitrary_grad13 (
 		[T] (Int_vect) { return T; },
 		[n] (Int_vect) { return n; },
-		[=] (Int_vect r) { return U * (real (r.x)/(Nx-1)-sqrt(pi)/2*k0*Kn)/corr; },
+		[=] (Int_vect r) { return U * real ((real (r.x)/(Nx-1)-sqrt(pi)/2*k0*Kn)/corr); },
 		[] (Int_vect) { return 0; },
 		[=] (Int_vect) { return Real_vect (0, -Ux*2*mu*Kn/corr , 0); }	
   	);
@@ -79,8 +79,8 @@ void shock (Manager& manager)
 
 void relax (Manager& manager)
 {
-	const real T = 1, n = 1, u = 1, q = 0*.1, p = 1;
-	manager.set_grid (3.4*sqrt (T), 100, 1, {});
+	const real T = 1, n = 1, u = 1, q = .01, p = 0*.05;
+	manager.set_grid (4.2*sqrt (T), 100, 1, {});
 	
 	Box::init_cond = arbitrary_grad13 (
 		[T] (Int_vect) { return T; },
@@ -120,7 +120,7 @@ void kaskad_knudsen_2d (Manager& manager, int num)
 	const int multi = 2;			// 2
 	const int tank = 1;				// 1
 	const real Tmin = 1, Tmax = 2;	// 1 2
-	int Nx, Nz; 			// 10
+	int Nx, Nz; 					// 10
 	Nx = 32*multi, Nz = 28*multi;	// 32 28
 	real Kn = 0.5;					// 0.5
 	manager.set_grid (4.8*sqrt (Tmax), Kn, Nz/2, {XX, ZZ});

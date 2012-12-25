@@ -1,4 +1,5 @@
 #include <boost/math/constants/constants.hpp>
+#include <stdexcept>
 
 #include "vel_grid.h"
 
@@ -103,11 +104,11 @@ Vel_grid::Vel_grid (real temp, real dens, Real_vect speed, Real_vect qflow, Real
 	m (mapper ()), v (new std::valarray<real> (m.volume ()))
 {
 	// create maxwell distribution function with given temperature, density and speed
-	const real coeff = dens * std::pow (boost::math::constants::pi<double> ()*temp, -1.5);
-	const real k = 1./temp;
+	const real coeff = dens * std::pow (boost::math::constants::pi<real> ()*temp, -1.5);
+	const real k = -1./temp;
 	for (int i=0; i<m.volume (); i++) {
 		const Int_vect& p = m[i];
-		(*v)[i] = coeff * std::exp (-k*(sqr(Real_vect (vel[p.x], vel[p.y], vel[p.z]) - speed)));
+		(*v)[i] = coeff * std::exp (k*(sqr(Real_vect (vel[p.x], vel[p.y], vel[p.z]) - speed)));
 	}
 	if (sqr (qflow) == 0 && sqr (shear) == 0) return;				// just optimization
 	// build the Grad 13-moment approximation from maxwell distribution
@@ -116,6 +117,8 @@ Vel_grid::Vel_grid (real temp, real dens, Real_vect speed, Real_vect qflow, Real
 	for (int i=0; i<m.volume (); i++) {
 		const Int_vect& p = m[i];
 		Real_vect c = Real_vect (vel[p.x], vel[p.y], vel[p.z]) - speed;
+		real factor = 1 + k1*shear_matrix_product (shear, c) + k2*dot (qflow, c)*(sqr (c)-2.5*temp);
+		if (factor <= 0) throw std::logic_error ("Initial Grad13 distribution has negative values.");
 		(*v)[i] *= 1 + k1*shear_matrix_product (shear, c) + k2*dot (qflow, c)*(sqr (c)-2.5*temp);
 	}
 }
