@@ -32,13 +32,14 @@ public:
 	virtual bool write_result (int time) = 0;
 	void add_point (Box*, const Int_vect&);
 	void write_f (int time);
-	virtual ~Writer () { }
+	virtual ~Writer () {}
 };
 
 namespace Writers {
 	typedef std::unique_ptr<Writer> pWriter;
 	struct Writer_creator {
 		virtual pWriter create (const Boxes&, int) = 0;
+		virtual ~Writer_creator () {}
 	};
 	void write_param (Files_format, std::ofstream&, real);
 	void write_param (Files_format, std::ofstream&, Real_vect);

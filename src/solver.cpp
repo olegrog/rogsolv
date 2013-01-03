@@ -212,10 +212,10 @@ int main (int argc, char *argv[])
 	//tube (manager);
 	//cube2 (manager);
 	//poiseuille (manager);
-	//heat_transfer (manager);
+	heat_transfer (manager);
 	//couette (manager);
 	//shock (manager);
-	relax (manager);
+	//relax (manager);
 	//knudsen_slip (manager);
 	manager.init_model ();						// prepare calculations
 	manager.iterate ();							// cycle of iterations

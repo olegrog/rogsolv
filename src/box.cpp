@@ -46,7 +46,7 @@ void Box::init_distribution ()
 	}
 	if (!init_cond) throw std::logic_error ("Initial conditions have not been initialized");
 	mapper ().set_side ();
-	for_each_index (f->all (), [this] (Vel_grid& gr, Int_vect c) { init_cond->set_grid (gr, coord () + c); });	// initial distribution function
+	for_each_index (f->all (), [&] (Vel_grid& gr, Int_vect c) { init_cond->set_grid (gr, coord () + c); });	// initial distribution function
 	for (MPI_Buffer::iterator pbuf = MPI_buffer ().begin (); pbuf != MPI_buffer ().end (); ++pbuf)
 		(*pbuf)->init_buffer ();
 }

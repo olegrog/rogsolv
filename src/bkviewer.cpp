@@ -26,7 +26,7 @@ void Writer_bkviewer::build_map ()
 			map.features = &feat;										// fill gas cells
 		});
 	}
-	for_each (map->all (), [&solid] (Map& map) {
+	for_each (map->all (), [&] (Map& map) {
 		if (map.type == SOLID)
 			map.features = &solid;										// fill solid cells		
 	});

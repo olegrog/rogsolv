@@ -162,7 +162,7 @@ void Manager::set_grid (real cut, real knud, int ch_size, Box::Space sp)
 	space = sp;
 	int R = mapper ().radius ();
 	Box::H = 1./knud/ch_size;
-	Box::tau = 0*Box::H/sqrt (3)/cut;
+	Box::tau = Box::H/sqrt (3)/cut;
 	Vel_grid::set_cut (cut);
 	printer->title ("Grid parameters");
 	printer->var ("Knudsen number", knud);

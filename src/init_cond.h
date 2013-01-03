@@ -3,6 +3,7 @@
 class Init_cond {
 public:
 	virtual void set_grid (Vel_grid&, Int_vect coord) const = 0;
+	virtual ~Init_cond () {}
 };
 
 class Const_maxwell : public Init_cond {
