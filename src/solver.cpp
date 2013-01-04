@@ -1,9 +1,9 @@
-#include "manager.h"
-#include "box.h"
-#include "ci.h"
-#include "tvd_scheme.h"
-#include "first_scheme.h"
-#include "paraview.h"
+#include "workers/manager.h"
+#include "containers/box.h"
+#include "ci/ci.hpp"
+#include "schemes/tvd_scheme.h"
+#include "schemes/first_scheme.h"
+#include "writers/paraview.h"
 
 #include <mpi.h>
 
@@ -197,8 +197,8 @@ int main (int argc, char *argv[])
 {
 //	Manager manager (new Writers::BKViewer);
 	Manager manager (new Writers::ParaView);
-	set_power (10e5);								// set Korobov grid power
-	Mapper::set_radius (16);						// set Vel_grid radius
+	ci::korobov_grid.resize (10e5);				// set Korobov grid power
+	Mapper::set_radius (20);						// set Vel_grid radius
 	int finish = 2, log = 1, macro = 1, cache = 500;
 	if (argc>=2) finish = atoi (argv[1]);			// set finish
 	if (argc>=3) log = atoi (argv[2]);				// set log

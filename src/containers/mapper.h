@@ -4,7 +4,7 @@
 #include <valarray>
 #include <cassert>
 
-#include "vector3.h"
+#include "../base/vector3.h"
 
 // Singleton
 class Mapper {

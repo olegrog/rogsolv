@@ -4,9 +4,9 @@
 #include <map>
 #include <string>
 
-#include "box.h"
+#include "../containers/box.h"
 #include "printer.h"
-#include "writer.h"
+#include "../writers/writer.h"
 
 class Timer {
 	int finish, log, macro, cache;

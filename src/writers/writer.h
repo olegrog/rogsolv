@@ -3,7 +3,7 @@
 
 #include <map>
 #include <memory>
-#include "box.h"
+#include "../containers/box.h"
 
 enum Files_format {BIN, TXT, XML};
 enum Cell_type {SOLID, GAS};

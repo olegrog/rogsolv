@@ -1,10 +1,11 @@
 #ifndef BUFFER_H
 #define BUFFER_H
 
-#include <mpi.h>
 #include <valarray>
 
 #include "vel_grid.h"
+
+#include <mpi.h>
 
 class Box;
 

@@ -6,7 +6,7 @@
 #include <sys/stat.h>
 
 #include "writer.h"
-#include "vel_grid.h"
+#include "../containers/vel_grid.h"
 
 const int precision = 8;	// number of figures in text output (float has 6 precise figures, double - 15)
 void Writers::write_param (Files_format fmt, std::ofstream& file, real value)

@@ -4,15 +4,14 @@
 #include <map>
 #include <vector>
 #include <set>
-#include <mpi.h>
-
-//#define NDEBUG
 #include <cassert>
 
 #include "vel_grid.h"
 #include "matrix.h"
-#include "difference_scheme.h"
-#include "init_cond.h"
+#include "../schemes/difference_scheme.h"
+#include "../base/init_cond.h"
+
+//#include <mpi.h>
 
 struct Features {															// list of calculating macroparameters
 	real dens, temp;														// scalar parameters
@@ -80,12 +79,6 @@ public:
 	void set_maxwell (Side, real temp, real dens);							// set free Maxwell distribution
 	void set_interface (Side, real temp, real dens, Real_vect speed);		// set interface boundary
 	void set_simple (Side, const Simple_bound&);							// set simple boundary
-};
-
-// calculating molecular collisions
-class Collision_integral {
-public:
-	void operator () (Box*);
 };
 
 // calculating all macroparameters

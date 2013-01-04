@@ -1,10 +1,11 @@
-#include <memory>
+//#include <memory>
 
-#include "box.h"
-#include "difference_scheme.h"
-#include "writer.h"
+#include "../containers/box.h"
+#include "../schemes/difference_scheme.h"
+#include "../writers/writer.h"
 #include "printer.h"
 #include "timer.h"
+#include "../base/auxiliary.h"
 
 class Manager {
 	Box::Space space;													// space axis set
@@ -31,7 +32,7 @@ public:
 	void set_grid (	real cutting_velocity,
 					real knudsen_number, 
 					int character_size, 
-					Box::Space axis_space = Box::Space {XX, YY, ZZ});
+					Box::Space axis_space = Box::Space ({XX, YY, ZZ}));
 	void set_scheme (Difference_scheme*);
 	void link_boxes (Box*, Box*, Axis, Int_vect offset);				// linking boxes along axis with offset
 	void link_boxes (Box*, Side, Box*, Side);							// complex linking

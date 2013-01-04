@@ -3,7 +3,7 @@
 
 #include <set>
 
-#include "box.h"
+#include "../containers/box.h"
 
 class Printer {
 	int MPI_rank;

@@ -1,10 +1,10 @@
 #include <functional>
-#include <stack>
-#include <mpi.h>
 #include <stdexcept>
 
 #include "manager.h"
-#include "ci.h"
+#include "../ci/ci.hpp"
+
+#include <mpi.h>
 
 struct Join_boundaries {
 	Buffer& buf;
@@ -136,8 +136,18 @@ void Manager::transfer ()
 void Manager::collision_integral (real time)
 {
 	timer->nick ("integral");
-	ci_gen (time, mapper ());
-	for_all_boxes (Collision_integral ());
+	int R = mapper ().radius ();
+	double a = Vel_grid::cut_vel () / R;
+	double m = 1;
+	ci::Particle p {1};
+	// generating interating korobov grid
+	ci::gen (time, ci::korobov_grid.size (), R, R, mapper (), mapper (), a, m, m, p, p);
+	// directly integrating
+	for_all_boxes ([](Box* box) {
+		for_each (box->f->all (), [] (Vel_grid& grid) {
+			ci::iter (grid, grid);
+		});
+	});
 }
 
 void Manager::iterate ()
@@ -172,16 +182,17 @@ void Manager::set_grid (real cut, real knud, int ch_size, Box::Space sp)
 	printer->var ("Velocity grid radius", R);
 	printer->var ("Cutting velocity", cut);
 	printer->title ("Collision_integral");
-	printer->var ("Number of korobov points", get_power ());
-	int potential = HS_POTENTIAL;
+	printer->var ("Number of korobov points", ci::korobov_grid.size ());
+	
+	ci::Potential* potential = new ci::HSPotential ();
+	ci::Symmetry symmetry = ci::NO_SYMM;
+	ci::init (potential, symmetry);
 	srand (1000);
-	ci_init (R, cut, potential, NO_SYMM);
-	switch (potential) {
-	case HS_POTENTIAL:
-		printer->var ("Molecular potential", "Hard sphere"); break;
-	case LJ_POTENTIAL:
-		printer->var ("Molecular potential", "Lennard-Jones"); break;
-	}
+	
+	if (dynamic_cast<ci::HSPotential*> (potential))
+		printer->var ("Molecular potential", "Hard sphere");
+	if (dynamic_cast<ci::LJPotential*> (potential))
+		printer->var ("Molecular potential", "Lennard-Jones");
 }
 
 void Manager::set_scheme (Difference_scheme* s)
@@ -203,7 +214,7 @@ Manager::Manager (Writers::Writer_creator* wc)
 
 Manager::~Manager ()
 {
-	ci_finalize ();
+	ci::finalize ();
 	delete timer; delete printer; delete scheme;
 	for (BI pbox = boxes.begin (); pbox != boxes.end (); ++pbox)
 		delete *pbox;

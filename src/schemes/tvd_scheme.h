@@ -58,5 +58,5 @@ private:
 	class Boundary;
 };
 
-#include "tvd_scheme_after.h"
+#include "tvd_scheme_impl.h"
 #endif // TVD_SCHEME_H

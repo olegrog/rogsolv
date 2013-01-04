@@ -2,8 +2,8 @@
 #include <stdexcept>
 
 #include "first_scheme.h"
-#include "printer.h"
-#include "box.h"
+#include "../workers/printer.h"
+#include "../containers/box.h"
 
 struct First_scheme::Interior {
 	const Axis axis;

@@ -3,8 +3,8 @@
 
 #include <valarray>
 
-#include "auxiliary.h"
-#include "vector3.h"
+#include "../base/auxiliary.h"
+#include "../base/vector3.h"
 #include "mapper.h"
 
 class Scalar {															// scalar type for vel_grid arithmetic
@@ -142,5 +142,5 @@ void for_each (const Vel_grid& grid, F func)
 void print_vel_grid (const Vel_grid & grid);
 void print_half_grid (const Half_grid & grid, Side side);
 
-#include "vel_grid_after.h"
+#include "vel_grid_impl.h"
 #endif

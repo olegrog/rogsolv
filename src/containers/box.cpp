@@ -1,21 +1,12 @@
-#include <mpi.h>
 #include <algorithm>
 #include <stdexcept>
 
 #include "box.h"
-#include "ci.h"
+
+#include <mpi.h>
 
 real Box::H, Box::tau;
 Init_cond* Box::init_cond = 0;
-
-struct Integral {
-	void operator() (Vel_grid& grid) { ci_iter (grid, grid); }
-};
-
-void Collision_integral::operator () (Box* box)
-{
-	for_each (box->f->all (), Integral ());
-}
 
 struct Parameters {
 	void operator() (const Vel_grid& f, Features& feat)

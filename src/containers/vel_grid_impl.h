@@ -1,12 +1,6 @@
-#ifndef VEL_GRID_AFTER_H
-#define VEL_GRID_AFTER_H
-
 // this is fucking unit that nobody must read
 // all functions will be inlined when compiled with -O3
 
-#include "auxiliary.h"
-#include "vector3.h"
-#include "mapper.h"
 #include "vel_grid.h"
 
 // the base class Expression, which store used closure
@@ -283,6 +277,3 @@ inline Expr<Reflect<Vel_grid> > reflect (const Vel_grid& a, Axis ax)
 	typedef Reflect<Vel_grid> Clos;
 	return Expr<Clos> (Clos (a, ax));
 }
-
-
-#endif

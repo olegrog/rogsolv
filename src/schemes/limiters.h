@@ -5,7 +5,7 @@
 #include <algorithm> // for min_element
 #include <string>
 
-#include "auxiliary.h"
+#include "../base/auxiliary.h"
 
 namespace Lmtr {
 

@@ -1,4 +1,4 @@
-#include "vel_grid.h"
+#include "../containers/vel_grid.h"
 
 class Init_cond {
 public:

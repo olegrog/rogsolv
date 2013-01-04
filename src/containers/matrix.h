@@ -3,10 +3,8 @@
 
 #include <valarray>
 
-#include "auxiliary.h"
-#include "vector3.h"
-
-
+#include "../base/auxiliary.h"
+#include "../base/vector3.h"
 #include "vel_grid.h"
 
 // ----------------------------- Slice ---------------------------------

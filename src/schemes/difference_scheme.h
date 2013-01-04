@@ -3,10 +3,8 @@
 
 #include <map>
 
-#include "walls.h"
-//#include "printer.h"
-#include "box.h"
-#include "buffer.h"
+#include "../containers/walls.h"
+#include "../containers/box.h"
 
 class Printer;
 // this class is a part of the third abstract level containing difference scheme

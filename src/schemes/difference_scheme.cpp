@@ -1,7 +1,5 @@
 #include "difference_scheme.h"
 
-#include "box.h"
-
 void Difference_scheme::next_layer (Box* box)
 {
 	mapper ().set_side ();

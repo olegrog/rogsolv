@@ -2,7 +2,6 @@
 #define FIRST_SCHEME_H
 
 #include "difference_scheme.h"
-#include "walls.h"
 
 // buffer for first order scheme
 class First_buffer : public Buffer {

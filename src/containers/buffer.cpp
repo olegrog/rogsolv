@@ -1,4 +1,3 @@
-#include <mpi.h>
 #include "box.h"
 
 Buffer* Buffer::twin_buffer (Box* this_box) const

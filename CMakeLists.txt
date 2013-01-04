@@ -7,6 +7,12 @@ set (CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=c++0x -Wall -pedantic -Wextra -Win
 # -Wunreachable-code -Wcast-qual -Wcast-align -Wconversion
 
 aux_source_directory (src library_sources)
+aux_source_directory (src/base library_sources)
+aux_source_directory (src/ci library_sources)
+aux_source_directory (src/containers library_sources)
+aux_source_directory (src/schemes library_sources)
+aux_source_directory (src/workers library_sources)
+aux_source_directory (src/writers library_sources)
 
 add_executable (rogsolv ${library_sources})
 target_link_libraries (rogsolv rt boost_filesystem boost_system)
