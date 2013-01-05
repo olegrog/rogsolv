@@ -51,7 +51,7 @@ namespace ci {
 	//конечные параметры, которые нужны для вычисления интеграла столкновений
 	template <typename Map>
 	inline void calc_int_node(V3i xi1, V3i xi2, double b2, double e, int nk_rad1, int nk_rad2,
-			Map& xyz2i1, Map& xyz2i2, double m1, double m2, double a, const Particle& p1, const Particle& p2) {
+			Map& xyz2i1, Map& xyz2i2, double m1, double m2, double, const Particle& p1, const Particle& p2) {
 
 		V3d rxi1 = i2xi(xi1, nk_rad1);
 		V3d rxi2 = i2xi(xi2, nk_rad2);
@@ -211,9 +211,9 @@ namespace ci {
 		}
 
 //		std::cout << "n_calc = " << nc.size() << " N_nu = " << N_nu << std::endl;
-		for (int j = 0; j < 9; j++) 
-			std::cout << ss[j] << ' ';
-		std::cout << std::endl;
+// 		for (int j = 0; j < 9; j++) 
+// 			std::cout << ss[j] << ' ';
+// 		std::cout << std::endl;
 
 		double B = (1/sqrt(2)/M_PI) * 2*M_PI * 0.5*sqr(potential->bMax(p1, p2)) * nk1 * nk2 * std::pow(a, 3) * a / N_nu / 4 * tt;
 /*

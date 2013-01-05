@@ -3,8 +3,6 @@
 
 #include "timer.h"
 
-double diff_sec (timespec t1, timespec t2) { return double (t2.tv_nsec-t1.tv_nsec)/1e9 + (t2.tv_sec-t1.tv_sec); }
-
 Timer::Timer (Printer* pr, Writer* wr, const Boxes& b) : boxes (b), counter (0), printer (pr), writer (wr)
 {
 	nick ("init");
@@ -65,18 +63,21 @@ void Timer::nick (const std::string str)
 {
 	static std::string phase;
 	
-	timespec cpu_prev = cpu, real_prev = real;
-	clock_gettime (CLOCK_PROCESS_CPUTIME_ID, &cpu);
-	clock_gettime (CLOCK_REALTIME, &real);
+	auto prev_real = curr_real;
+	auto prev_cpu = curr_cpu;
+	
+	curr_real = Real_clock::now ();
+	curr_cpu = Cpu_clock::now ();
 	if (phase == "") { phase = str; return; }
 	
 	double time;
+	const double nano = 1e9;
 
-	time = diff_sec (cpu_prev, cpu);
+	time = double (Cpu_chrono::duration_cast<boost::chrono::nanoseconds> (curr_cpu - prev_cpu).count ())/nano;
 	nick_cpu[phase] += time;
 	nick_cpu["all"] += time;
 	
-	time = diff_sec (real_prev, real);
+	time = double (Real_chrono::duration_cast<std::chrono::nanoseconds> (curr_real - prev_real).count ())/nano;
 	nick_real[phase] += time;
 	nick_real["all"] += time;
 	
