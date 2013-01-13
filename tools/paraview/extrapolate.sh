@@ -2,7 +2,7 @@
 
 usage() {
 	echo "This script extrapolates investigating value along time using gnuplot"
-	echo "Usage: `$basename $0` <script> <path>"
+	echo "Usage: `basename $0` <script> <path>"
 }
 
 [[ $# -ne 2 ]] && { echo "Illegal amount of arguments."; usage; exit 1; }
@@ -11,7 +11,7 @@ path=$2
 [[ -f $script ]] || { echo "Bad script filename."; usage; exit 1; }
 [[ -d $path ]] || { echo "Bad dirname."; usage; exit 1; }
 
-tmp=$(mktemp)
+tmp=$(mktemp /tmp/$(basename $0).XXXXXX)
 for dir in $(find $path -name VTK); do
 	echo $dir
 	: > $tmp
@@ -26,3 +26,5 @@ for dir in $(find $path -name VTK); do
 	cat $tmp | python -c 'from sys import stdin; import numpy as np; \
 	       	a = [float(i) for i in stdin.read().split()]; print "mean = %.4f" % np.mean(a); print "sigma = %.2e" % np.std(a)'
 done
+
+rm $tmp
