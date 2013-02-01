@@ -13,7 +13,7 @@ template<class T> struct Vec3 {
 	Vec3 (const T& t) { x = y = z = t; }
 	Vec3 () { x = y = z = T (); }
 	Vec3 (const Vec3& v) { __builtin_memcpy (this, &v, 3*sizeof (T)); }
-	template<class C> Vec3 (const Vec3<C>& v) : x (v.x), y (v.y), z (v.z) { }
+	template<class C> Vec3 (const Vec3<C>& v) : x (static_cast<T> (v.x)), y (static_cast<T> (v.y)), z (static_cast<T> (v.z)) { }
 	Vec3& operator= (const Vec3& v) { x = v.x; y = v.y; z = v.z; return *this; }
 	Vec3& operator/= (const T& t) { x /= t; y /= t; z /= t; return *this; }
 	Vec3& operator*= (const T& t) { x *= t; y *= t; z *= t; return *this; }
@@ -154,14 +154,14 @@ template<class T> bool operator< (const Vec3<T>& v1, const Vec3<T>& v2)
 {
 	for (int i=0; i<3; i++)
 		if (v1[i] > v2[i]) return false;
-	if (v1.z == v2.z) return false; else return true;
+	if (std::abs (v1.z-v2.z) <= std::abs (v1.z)*std::numeric_limits<T>::epsilon ()) return false; else return true;
 }
 
 template<class T> bool operator> (const Vec3<T>& v1, const Vec3<T>& v2)
 {
 	for (int i=0; i<3; i++)
 		if (v1[i] < v2[i]) return false;
-	if (v1.z == v2.z) return false; else return true;
+	if (std::abs (v1.z-v2.z) <= std::abs (v1.z)*std::numeric_limits<T>::epsilon ()) return false; else return true;
 }
 
 template<class T> T sqr (const Vec3<T>& v)

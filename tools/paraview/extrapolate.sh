@@ -18,13 +18,13 @@ for dir in $(find $path -name VTK); do
 	for f in $(ls $dir | grep vtk | sort -n); do
 		$(dirname $script)/$(basename $script) $dir/$f | tail -1 | awk '{print $3}' >> $tmp		# write to tmp file investigated values
 	done
-	sed -i '1,5d' $tmp							# remove first 5 values
+	sed -i '1,10d' $tmp							# remove first 10 values
 	num=$(wc -l $tmp | awk '{print $1}')
 	echo "$num files were used"
 	[[ $num -eq 0 ]] && continue
 	# evaluate mean value
 	cat $tmp | python -c 'from sys import stdin; import numpy as np; \
-	       	a = [float(i) for i in stdin.read().split()]; print "mean = %.4f" % np.mean(a); print "sigma = %.2e" % np.std(a)'
+		a = [float(i) for i in stdin.read().split()]; print "mean = %.4f" % np.mean(a); print "sigma = %.2e" % (np.std(a)/np.sqrt('$num'))'
 done
 
 rm $tmp

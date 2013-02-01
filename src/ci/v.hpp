@@ -21,7 +21,7 @@ template <typename T> class V3 {
 			x[0] = y[0]; x[1] = y[1]; x[2] = y2;
 		}
 		template <typename T1> V3(const V3<T1>& y) {
-			x[0] = y[0]; x[1] = y[1]; x[2] = y[2];
+			x[0] = static_cast<T>(y[0]); x[1] = static_cast<T>(y[1]); x[2] = static_cast<T>(y[2]);
 		}
 
 		template <typename T2> 
@@ -119,7 +119,7 @@ template <typename T> inline V3<T> rotate(const V3<T>& v, const V3<T>& n, double
 
 template <typename T> inline double angle(const T& u, const T& v) {
 	double r2 = sqr(u)*sqr(v);
-	if (r2 != 0.)
+	if (std::fabs(r2) >= std::max(std::fabs(sqr(u)), std::fabs(sqr(v)))*std::numeric_limits<T>::epsilon())
 		return std::acos(dot(u, v)/std::sqrt(r2));
 	else
 		return 0.;

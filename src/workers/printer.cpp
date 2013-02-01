@@ -9,7 +9,7 @@ const int string_length = 60;
 void Printer::title (const string& str)
 {
 	if (MPI_rank) return;
-	int len = (string_length+str.size ())/2;
+	int len = (string_length+static_cast<int> (str.size ()))/2;
 	cout << setw (len) << setfill ('-') << str << setw (string_length-len) << "" << setfill (' ') << endl;
 }
 

@@ -21,7 +21,7 @@ inline real sqr (real x) { return x*x; }
 Mapper::Mapper ()
 {
 	volume_ = 0;
-	xyz = new std::valarray<int> (pow (2*R, 3));
+	xyz = new std::valarray<int> ((2*R)*(2*R)*(2*R));
 	Int_vect p;
 	FOR_BALL
 		(*xyz)[p.x+p.y*(2*R)+p.z*(2*R)*(2*R)] = volume_++;

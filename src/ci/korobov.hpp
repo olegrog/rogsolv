@@ -28,9 +28,8 @@ namespace korobov {
 	};
 
 	inline double frac(double x) {
-		if (x > 0) return (x - (int)x);
-		else if (x == 0) return 0;
-		else return (x - (int)x - 1);
+		double frac_part;
+		return std::modf(x, &frac_part);
 	} 
 
 	class Point {

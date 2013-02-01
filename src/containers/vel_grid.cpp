@@ -1,5 +1,6 @@
 #include <boost/math/constants/constants.hpp>
 #include <stdexcept>
+#include <limits>
 
 #include "vel_grid.h"
 
@@ -110,7 +111,7 @@ Vel_grid::Vel_grid (real temp, real dens, Real_vect speed, Real_vect qflow, Real
 		const Int_vect& p = m[i];
 		(*v)[i] = coeff * std::exp (k*(sqr(Real_vect (vel[p.x], vel[p.y], vel[p.z]) - speed)));
 	}
-	if (sqr (qflow) == 0 && sqr (shear) == 0) return;				// just optimization
+	if (sqr (qflow) < std::numeric_limits<real>::epsilon() && sqr (shear) < std::numeric_limits<real>::epsilon()) return;				// just optimization
 	// build the Grad 13-moment approximation from maxwell distribution
 	const real k1 = 1./(dens*sqr(temp));
 	const real k2 = 4.*k1/(5.*temp);

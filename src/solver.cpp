@@ -35,7 +35,7 @@ void heat_transfer (Manager& manager)
 {
 	const real dT = 0.01, T = 1, Tmax = T+dT/2, Tmin = T-dT/2;
 	const real pmax = 1, lambda = 2.129475, d1 = 2.4001, pi = 3.14159;
-	const int Nx = 20;
+	const int Nx = 40;
 	const real Kn = 0.05, corr = 1 + sqrt(pi)*d1*Kn;
 	
 	manager.set_grid (4.3*sqrt (Tmax), Kn, Nx, {XX});
@@ -197,8 +197,8 @@ int main (int argc, char *argv[])
 {
 //	Manager manager (new Writers::BKViewer);
 	Manager manager (new Writers::ParaView);
-	ci::korobov_grid.resize (20e5);				// set Korobov grid power
-	Mapper::set_radius (26);						// set Vel_grid radius
+	ci::korobov_grid.resize (10e5);				// set Korobov grid power
+	Mapper::set_radius (60);						// set Vel_grid radius
 	int finish = 2, log = 1, macro = 1, cache = 500;
 	if (argc>=2) finish = atoi (argv[1]);			// set finish
 	if (argc>=3) log = atoi (argv[2]);				// set log

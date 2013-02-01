@@ -30,6 +30,7 @@ namespace ci {
 	extern const Potential* potential;
 
 	extern int ss[9];
+	extern const double exact_hit;
 
 	template <typename T> inline T sqr(T x) { return x*x; }
 	inline int toInt(double x) { return static_cast<int>(x); }
@@ -47,10 +48,45 @@ namespace ci {
 
 	const V3d scatter(const V3d& x, double theta, double e);
 
+	class Find_nodes {
+		const int nk_rad2;
+		const double m2;
+		const V3d u, w;
+	public:
+		Find_nodes (int r_, double m_, V3d u_, V3d w_) : nk_rad2 (r_), m2 (m_), u (u_), w (w_) { }
+		bool operator () (const std::vector<V3i>& stencil, double& E0, double& El, double& Em, V3i& xi2l, V3i& xi2m) const {
+			double q = std::numeric_limits<double>::max();
+			bool is_found = false;
+			for (auto pl : stencil) { 
+				V3d rxil = i2xi(pl, nk_rad2) - m2*u;
+				double el = sqr(rxil);
+				if (el > E0 * (1+std::numeric_limits<double>::epsilon())) 
+					for (auto pm : stencil) {
+						V3d rxim = i2xi(pm, nk_rad2) - m2*u;
+						double em = sqr(rxim);
+						if (em <= E0) {
+							double r = (E0-el)/(em-el);
+							double ql = sqr(rxil - w);
+							double qm = sqr(rxim - w);
+							double q1 = (1-r)*ql + r*qm;
+							if (q1 < q) {
+								q = q1;
+								El = el; Em = em;
+								xi2l = pl; xi2m = pm;
+								is_found = true;
+							}
+						}
+					}
+			}
+			return is_found;
+		}
+	};
+
+	
 	//процедура вычисляет по начальным скоростям, прицельному растоянию и углу
 	//конечные параметры, которые нужны для вычисления интеграла столкновений
 	template <typename Map>
-	inline void calc_int_node(V3i xi1, V3i xi2, double b2, double e, int nk_rad1, int nk_rad2,
+	void calc_int_node(V3i xi1, V3i xi2, double b2, double e, int nk_rad1, int nk_rad2,
 			Map& xyz2i1, Map& xyz2i2, double m1, double m2, double, const Particle& p1, const Particle& p2) {
 
 		V3d rxi1 = i2xi(xi1, nk_rad1);
@@ -99,38 +135,28 @@ namespace ci {
 		V3i xi2l, xi2m;
 		double El = std::numeric_limits<double>::max();
 		double Em = std::numeric_limits<double>::min();
-		double q = std::numeric_limits<double>::max();
-		bool boo = false;
 
-		std::vector<V3i> stencil;
+		std::vector<V3i> stencil8, stencil32;
+		
+		// расширенный шаблон (32 точки)
+		for (int s1 = -1; s1 < 3; ++s1)
+			for (int s2 = -1; s2 < 3; ++s2)
+				for (int s3 = -1; s3 < 3; ++s3)
+					if (sqr(s1-0.5)+sqr(s2-0.5)+sqr(s3-0.5) < 3)
+						stencil32.push_back(xi + V3i(s1, s2, s3));
+		
+		// стандартный шаблон (8 точек), не будет найдено порядка 0.01% узлов (см. ss[4])
 		for (int s1 = 0; s1 < 2; ++s1)
 			for (int s2 = 0; s2 < 2; ++s2)
 				for (int s3 = 0; s3 < 2; ++s3)
-					stencil.push_back(xi + V3i(s1, s2, s3));
+					stencil8.push_back(xi + V3i(s1, s2, s3));
 
-		for (std::vector<V3i>::iterator pl = stencil.begin(); pl != stencil.end(); ++pl) { 
-				V3d rxil = i2xi(*pl, nk_rad2) - m2*u;
-				double el = sqr(rxil);
-				if (el > E0) 
-					for (std::vector<V3i>::iterator pm = stencil.begin(); pm != stencil.end(); ++pm) {
-							V3d rxim = i2xi(*pm, nk_rad2) - m2*u;
-							double em = sqr(rxim);
-							if (em <= E0) {
-								double r = (E0-el)/(em-el);
-								double ql = sqr(rxil - w);
-								double qm = sqr(rxim - w);
-								double q1 = (1-r)*ql + r*qm;
-								if (q1 < q) {
-									q = q1;
-									El = el; Em = em;
-									xi2l = *pl; xi2m = *pm;
-									boo = true;
-								}
-							}
-						}
+		// поиск точек, минимизируя функционал [(1-r)*ql + r*qm]
+		Find_nodes find_nodes (nk_rad2, m2, u, w);
+		if (!find_nodes (stencil8, E0, El, Em, xi2l, xi2m))
+			if (!find_nodes (stencil32, E0, El, Em, xi2l, xi2m)) {
+				ss[6]++; N_nu--; return;
 			}
-
-		if (!boo) {	ss[4]++; return; }
 
 		double r = (E0-El)/(Em-El);
 
@@ -143,11 +169,10 @@ namespace ci {
 
 		if (out_of_sphere_i(xi1l, nk_rad1) || out_of_sphere_i(xi1m, nk_rad1)  ||
 				out_of_sphere_i(xi2l, nk_rad2) || out_of_sphere_i(xi2m, nk_rad2)) {
-			ss[6]++;
-			return;
+			ss[6]++; return;
 		}
 
-		if (std::abs(r-1) < 1e-12) 
+		if (std::abs(r-1) < exact_hit) 
 			ss[8]++;
 
 		node_calc node; 
@@ -210,12 +235,13 @@ namespace ci {
 			calc_int_node(xi1, xi2, b2, e, nk_rad1, nk_rad2, xyz2i1, xyz2i2, m1, m2, a, p1, p2);	
 		}
 
-//		std::cout << "n_calc = " << nc.size() << " N_nu = " << N_nu << std::endl;
+// 		std::cout << "n_calc = " << nc.size() << " N_nu = " << N_nu << std::endl;
 // 		for (int j = 0; j < 9; j++) 
 // 			std::cout << ss[j] << ' ';
 // 		std::cout << std::endl;
 
-		double B = (1/sqrt(2)/M_PI) * 2*M_PI * 0.5*sqr(potential->bMax(p1, p2)) * nk1 * nk2 * std::pow(a, 3) * a / N_nu / 4 * tt;
+		double B = (1/sqrt(2)/M_PI) * 2*M_PI * 0.5*sqr(potential->bMax(p1, p2)) * static_cast<double>(nk1 * nk2)
+			* std::pow(a, 3) * a / static_cast<double>(N_nu) / 4 * tt;
 /*
 		std::cout << "m = " << m1 << ' ' << m2 << " d = " << p1.d << ' ' << p2.d << 
 					" nk = " << nk1 << ' ' << nk2 << 
@@ -237,8 +263,9 @@ namespace ci {
 
 	template <typename F>
 	void iter(F& f1, F& f2) {
+		int kneg = 0;
 		for (std::vector<node_calc>::iterator p = nc.begin(); p != nc.end(); ++p) {
-			if (std::abs(p->r-1) > 1e-10) {
+			if (std::abs(p->r-1) > exact_hit) {
 				sse::d2_t x, y, z, w, v;
 
 				x.d[0] = f1[p->i1l];
@@ -281,6 +308,7 @@ namespace ci {
 					f2[p->i2m] = z.d[1];
 					f1[p->i1 ] = rr5;
 					f2[p->i2 ] = rr6;
+					kneg++;
 				}
 			}
 			else {
@@ -305,8 +333,13 @@ namespace ci {
 					f2[p->i2] = g2;
 					f1[p->i1m] = g3;
 					f2[p->i2m] = g4;
+					kneg++;
 				}
 			}
+		}
+		if (kneg /*> (0.001*N_nu)*/) {
+			std::cout.precision (2);
+			std::cout << "There was negative f: " << kneg << ", %N_nu = " << 100.*kneg/N_nu << std::endl;
 		}
 	}
 }

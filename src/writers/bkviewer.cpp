@@ -9,7 +9,7 @@ using namespace Writers;
 
 void Writer_bkviewer::write_static (std::ofstream& file, Int_vect coord, int type)
 {
-	Vec3<float> v = Vec3<float> (coord) + 0.5f; v *= Box::H;
+	Vec3<float> v = Vec3<float> (coord) + 0.5f; v *= static_cast<float> (Box::H);
 	file.write (reinterpret_cast<const char*> (&v), sizeof (Vec3<float>));
 	v = Vec3<float> (1);
 	file.write (reinterpret_cast<const char*> (&v), sizeof (Vec3<float>));

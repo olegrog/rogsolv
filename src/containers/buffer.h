@@ -43,7 +43,7 @@ void Buffer::MPI_swap (int dest, T& packages, size_t size)
 	if (sizeof (real) == sizeof (double)) datatype = MPI_DOUBLE;
 	if (sizeof (real) == sizeof (float)) datatype = MPI_FLOAT;
 	for (int i=0; i<capacity; i++)
-		MPI_Sendrecv_replace (packages[i].raw_data (), size, datatype, dest, 0, dest, 0, MPI_COMM_WORLD, &status);
+		MPI_Sendrecv_replace (packages[i].raw_data (), static_cast<int>(size), datatype, dest, 0, dest, 0, MPI_COMM_WORLD, &status);
 }
 
 #endif

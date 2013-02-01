@@ -12,7 +12,7 @@ const int precision = 8;	// number of figures in text output (float has 6 precis
 void Writers::write_param (Files_format fmt, std::ofstream& file, real value)
 {
 	if (fmt == BIN) {
-		float v = value;
+		float v = static_cast<float> (value);
 		file.write (reinterpret_cast<const char*> (&v), sizeof (float));
 	} 
 	if (fmt == TXT)
@@ -43,7 +43,7 @@ void Writer::macroparameters ()
 		Box* box = *pbox;
 		if (MPI_rank == box->MPI_rank ()) Macroparameters () (box);
 		
-		int package_size = box->size ().vol () * sizeof (Features) / sizeof(real);
+		int package_size = box->size ().vol () * static_cast<int> (sizeof (Features) / sizeof (real));
 		if (MPI_rank && MPI_rank == box->MPI_rank ())					// if (I'm not writer and it's my box)
 			MPI_Send (*box->features, package_size, datatype, 0, 0, MPI_COMM_WORLD);
 		if (!MPI_rank && MPI_rank != box->MPI_rank ()) 					// if (I'm writer and it's not my box)

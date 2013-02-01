@@ -19,7 +19,7 @@ class Timer {
 	int counter;
 	std::map<std::string, double> nick_cpu, nick_real;
 
-	typedef Real_chrono::steady_clock Real_clock;
+	typedef Real_chrono::system_clock Real_clock;
 	typedef Cpu_chrono::process_real_cpu_clock Cpu_clock;
 	Real_chrono::time_point<Real_clock> curr_real;
 	Cpu_chrono::time_point<Cpu_clock> curr_cpu;

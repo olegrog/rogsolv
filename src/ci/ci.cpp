@@ -11,6 +11,7 @@ namespace ci {
 	const Potential* potential;
 
 	int ss[9];
+	const double exact_hit = 1e-10;
 
 	void init(const Potential* p, Symmetry s) {
 		potential = p;
@@ -68,9 +69,9 @@ namespace ci {
 	void LJPotential::fillGbToTheta(size_t from, size_t to) const {
 		std::cout << "fill form " << from << ' ' << to << std::endl;
 		for (size_t i_g = from; i_g < to; ++i_g) {
-			double g = (i_g + 0.5) * g_step;
+			double g = (static_cast<double>(i_g) + 0.5) * g_step;
 			for (size_t i_b = 0; i_b < b_size; ++i_b) {
-				double b = b_extension * (i_b + 0.5) / b_size;
+				double b = b_extension * (static_cast<double>(i_b) + 0.5) / static_cast<double> (b_size);
 				gb2theta[i_b + i_g*b_size] = gbToThetaCalc(g, b);
 	//			std::cout << "gb2theta" << ' ' << i_b << ' ' << i_g << ' ' << i_b + i_g*b_size << ' ' 
 	//					<< gb2theta[i_b + i_g*b_size] << std::endl;
@@ -137,15 +138,15 @@ namespace ci {
 		b = 2. * b / (p1.d + p2.d);
 
 		double x_g = g / g_step;
-		double x_b = b_size * b / b_extension;
+		double x_b = static_cast<double>(b_size) * b / b_extension;
 		size_t i_g = static_cast<int>(x_g+0.5);
 		size_t i_b = static_cast<int>(x_b+0.5);
-		x_g -= i_g;
-		x_b -= i_b;
+		x_g -= static_cast<double>(i_g);
+		x_b -= static_cast<double>(i_b);
 
 		double d;
 		while (i_g + 1 > g_size) 
-			extentGbToTheta(1.2 * g_step * (i_g + 1));
+			extentGbToTheta(1.2 * g_step * static_cast<double>(i_g + 1));
 		if (i_b < b_size)
 			d = gb2theta[i_b + i_g*b_size];
 		else 
