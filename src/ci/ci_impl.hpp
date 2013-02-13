@@ -5,6 +5,8 @@
 #include <vector>
 #include <algorithm>
 #include <limits>
+#include <boost/math/constants/constants.hpp>
+#include <boost/math/special_functions/next.hpp>
 
 #include "ci.hpp"
 #include "sse.hpp"
@@ -32,7 +34,6 @@ namespace ci {
 	extern int ss[9];
 	extern const double exact_hit;
 
-	template <typename T> inline T sqr(T x) { return x*x; }
 	inline int toInt(double x) { return static_cast<int>(x); }
 
 	inline V3d i2xi(V3i i, int xi_rad) { return V3d(i) + 0.5 - xi_rad; }
@@ -48,30 +49,35 @@ namespace ci {
 
 	const V3d scatter(const V3d& x, double theta, double e);
 
-	class Find_nodes {
+	class Select_xilm {
+	public:
+		virtual bool operator () (const std::vector<V3i>&, double&, V3i&, V3i&) const = 0;
+		virtual ~Select_xilm () { }
+	};
+	
+	class Min_delta_p : public Select_xilm {
 		const int nk_rad2;
-		const double m2;
+		const double m2, E0;
 		const V3d u, w;
 	public:
-		Find_nodes (int r_, double m_, V3d u_, V3d w_) : nk_rad2 (r_), m2 (m_), u (u_), w (w_) { }
-		bool operator () (const std::vector<V3i>& stencil, double& E0, double& El, double& Em, V3i& xi2l, V3i& xi2m) const {
+		Min_delta_p (int r_, double m2_, double E0_, V3d u_, V3d w_) : nk_rad2 (r_), m2 (m2_), E0 (E0_), u (u_), w (w_) { }
+		bool operator () (const std::vector<V3i>& stencil, double& r, V3i& xi2l, V3i& xi2m) const {
 			double q = std::numeric_limits<double>::max();
 			bool is_found = false;
 			for (auto pl : stencil) { 
-				V3d rxil = i2xi(pl, nk_rad2) - m2*u;
-				double el = sqr(rxil);
-				if (el > E0 * (1+std::numeric_limits<double>::epsilon())) 
+				V3d xil = i2xi(pl, nk_rad2) - m2*u;
+				double El = sqr(xil);
+				if (boost::math::float_distance(E0, El) > 1) // El > E0 >= Em
 					for (auto pm : stencil) {
-						V3d rxim = i2xi(pm, nk_rad2) - m2*u;
-						double em = sqr(rxim);
-						if (em <= E0) {
-							double r = (E0-el)/(em-el);
-							double ql = sqr(rxil - w);
-							double qm = sqr(rxim - w);
-							double q1 = (1-r)*ql + r*qm;
-							if (q1 < q) {
-								q = q1;
-								El = el; Em = em;
+						V3d xim = i2xi(pm, nk_rad2) - m2*u;
+						double Em = sqr(xim);
+						if (Em <= E0) {
+							double r_ = (E0-El)/(Em-El);
+							double ql = sqr(xil - w);
+							double qm = sqr(xim - w);
+							double q_ = (1-r_)*ql + r_*qm;
+							if (q_ < q) {
+								r = r_; q = q_;
 								xi2l = pl; xi2m = pm;
 								is_found = true;
 							}
@@ -82,11 +88,44 @@ namespace ci {
 		}
 	};
 
+	class Min_delta_E : public Select_xilm {
+		const int nk_rad2;
+		const double m2, E0;
+		const V3d u, w;
+	public:
+		Min_delta_E (int r_, double m2_, double E0_, V3d u_, V3d w_) : nk_rad2 (r_), m2 (m2_), E0 (E0_), u (u_), w (w_) { }
+		bool operator () (const std::vector<V3i>& stencil, double& r, V3i& xi2l, V3i& xi2m) const {
+			double Em = 0;
+			double El = std::numeric_limits<double>::max();
+			bool found_l = false;
+			bool found_m = false;
+			for (auto p : stencil) { 
+				V3d xi = i2xi(p, nk_rad2) - m2*u;
+				double E = sqr(xi);
+				if (boost::math::float_distance(E0, E) > 1) { // E > E0
+					if (E < El) {
+						El = E;
+						xi2l = p;
+						found_l = true;
+					}
+				} else {
+					if (E > Em) {
+						Em = E;
+						xi2m = p;
+						found_m = true;
+					}
+				}
+			}
+			r = (E0-El)/(Em-El);
+			return found_l && found_m;
+		}
+	};
+
 	
 	//процедура вычисляет по начальным скоростям, прицельному растоянию и углу
 	//конечные параметры, которые нужны для вычисления интеграла столкновений
 	template <typename Map>
-	void calc_int_node(V3i xi1, V3i xi2, double b2, double e, int nk_rad1, int nk_rad2,
+	void calc_int_node(V3i xi1, V3i xi2, double b, double e, int nk_rad1, int nk_rad2,
 			Map& xyz2i1, Map& xyz2i2, double m1, double m2, double, const Particle& p1, const Particle& p2) {
 
 		V3d rxi1 = i2xi(xi1, nk_rad1);
@@ -104,8 +143,7 @@ namespace ci {
 		V3d u = (rxi1+rxi2)/(m1+m2);
 		V3d g = rxi2 - m2*u;
 			
-		// (I) счет разлетных скоростей
-		double b = std::sqrt(b2) * potential->bMax(p1, p2);
+		/** (I) счет разлетных скоростей **/
 
 		double root = m1 * m2 / (m1 + m2) * std::sqrt(sqr(rxi1/m1 - rxi2/m2));
 		double teta = potential->theta(p1, p2, b, root); 
@@ -123,20 +161,11 @@ namespace ci {
 		if ( out_of_sphere_r(wxi1, nk_rad1) || out_of_sphere_r(wxi2, nk_rad2) ) {
 			ss[2]++; return;
 		}
-		// (II) подгонка разлетных скоростей к узлам сетки					
+		/** (II) подгонка разлетных скоростей к узлам сетки **/
 				
-		// (x, y, z) скорость, от нее мы будем перебирать все скорости в кубе 
-		V3i xi = xi2i(wxi2, nk_rad2);
-
-//		std::cout << "xi " << xi << std::endl;
-
-		double E0 = sqr(g);
-		V3d w = wxi2 - m2*u;
-		V3i xi2l, xi2m;
-		double El = std::numeric_limits<double>::max();
-		double Em = std::numeric_limits<double>::min();
-
 		std::vector<V3i> stencil8, stencil32;
+		// (x, y, z) скорость, от нее мы будем перебирать все скорости в кубе 
+		V3i xi = xi2i(wxi2, nk_rad2); 
 		
 		// расширенный шаблон (32 точки)
 		for (int s1 = -1; s1 < 3; ++s1)
@@ -151,14 +180,16 @@ namespace ci {
 				for (int s3 = 0; s3 < 2; ++s3)
 					stencil8.push_back(xi + V3i(s1, s2, s3));
 
-		// поиск точек, минимизируя функционал [(1-r)*ql + r*qm]
-		Find_nodes find_nodes (nk_rad2, m2, u, w);
-		if (!find_nodes (stencil8, E0, El, Em, xi2l, xi2m))
-			if (!find_nodes (stencil32, E0, El, Em, xi2l, xi2m)) {
+		/** выбор оптимальной пары точек из шаблона, используя соответствующий метод **/
+		V3d w = wxi2 - m2*u;
+		V3i xi2l, xi2m;
+		double r;
+		Select_xilm* method = new Min_delta_p (nk_rad2, m2, sqr(g), u, w);
+		if (!(*method) (stencil8, r, xi2l, xi2m))
+			if (!(*method) (stencil32, r, xi2l, xi2m)) {
 				ss[6]++; N_nu--; return;
 			}
-
-		double r = (E0-El)/(Em-El);
+		delete method;
 
 		V3i xi1l = xi1 + xi2 - xi2l;
 		V3i xi1m = xi1 + xi2 - xi2m;
@@ -186,7 +217,7 @@ namespace ci {
 		node.i2l = xyz2i2(xi2l[0], xi2l[1], xi2l[2]);
 		node.i2m = xyz2i2(xi2m[0], xi2m[1], xi2m[2]);
 
-		node.c = std::sqrt(sqr(rxi1/m1 - rxi2/m2));
+		node.c = std::sqrt(sqr(rxi1/m1 - rxi2/m2)) * b;
 
 		nc.push_back(node);
 
@@ -229,18 +260,18 @@ namespace ci {
 						toInt(point[6] * nk_rad2 * 2),
 						toInt(point[7] * nk_rad2 * 2)	);	
 
-			double b2 =	point[8];
-			double e =	point[9] * 2*M_PI;
+			double b =	point[8] * potential->bMax(p1, p2);
+			double e =	point[9] * 2*boost::math::constants::pi<double>();
 
-			calc_int_node(xi1, xi2, b2, e, nk_rad1, nk_rad2, xyz2i1, xyz2i2, m1, m2, a, p1, p2);	
+			calc_int_node(xi1, xi2, b, e, nk_rad1, nk_rad2, xyz2i1, xyz2i2, m1, m2, a, p1, p2);	
 		}
 
 // 		std::cout << "n_calc = " << nc.size() << " N_nu = " << N_nu << std::endl;
 // 		for (int j = 0; j < 9; j++) 
-// 			std::cout << ss[j] << ' ';
+// 			std::cout << ss[j] << ',';
 // 		std::cout << std::endl;
 
-		double B = (1/sqrt(2)/M_PI) * 2*M_PI * 0.5*sqr(potential->bMax(p1, p2)) * static_cast<double>(nk1 * nk2)
+		double B = sqrt(2) * potential->bMax(p1, p2) * static_cast<double>(nk1 * nk2)
 			* std::pow(a, 3) * a / static_cast<double>(N_nu) / 4 * tt;
 /*
 		std::cout << "m = " << m1 << ' ' << m2 << " d = " << p1.d << ' ' << p2.d << 

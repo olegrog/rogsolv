@@ -187,12 +187,9 @@ void Manager::set_grid (real cut, real knud, int ch_size, Box::Space sp)
 	ci::Potential* potential = new ci::HSPotential ();
 	ci::Symmetry symmetry = ci::NO_SYMM;
 	ci::init (potential, symmetry);
-	srand (1000);
+	std::srand (1000);
 	
-	if (dynamic_cast<ci::HSPotential*> (potential))
-		printer->var ("Molecular potential", "Hard sphere");
-	if (dynamic_cast<ci::LJPotential*> (potential))
-		printer->var ("Molecular potential", "Lennard-Jones");
+	printer->var ("Molecular potential", potential->name ());
 }
 
 void Manager::set_scheme (Difference_scheme* s)

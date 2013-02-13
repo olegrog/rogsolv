@@ -54,7 +54,6 @@ void heat_transfer (Manager& manager)
 	manager.alone_box (box);
 }
 
-inline real sqr (real x) { return x*x; }
 void shock (Manager& manager)
 {
 	const real M = 3, g = 5./3;
@@ -197,8 +196,8 @@ int main (int argc, char *argv[])
 {
 //	Manager manager (new Writers::BKViewer);
 	Manager manager (new Writers::ParaView);
-	ci::korobov_grid.resize (10e5);				// set Korobov grid power
-	Mapper::set_radius (60);						// set Vel_grid radius
+	ci::korobov_grid.resize (5e5);				// set Korobov grid power
+	Mapper::set_radius (16);						// set Vel_grid radius
 	int finish = 2, log = 1, macro = 1, cache = 500;
 	if (argc>=2) finish = atoi (argv[1]);			// set finish
 	if (argc>=3) log = atoi (argv[2]);				// set log

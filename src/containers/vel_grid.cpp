@@ -7,8 +7,6 @@
 real Vel_grid::cut, Vel_grid::dV;
 std::valarray<real> Vel_grid::vel;
 
-inline real sqr (real x) { return x*x; }
-
 const Vel_grid& Vel_grid::operator= (const Vel_grid& expr)
 {
 	int size = m.size ();

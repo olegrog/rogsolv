@@ -4,6 +4,7 @@
 #include <iostream>
 #include <vector>
 #include <cmath>
+#include <boost/math/special_functions/next.hpp>
 
 namespace dod_vector {
 
@@ -119,7 +120,7 @@ template <typename T> inline V3<T> rotate(const V3<T>& v, const V3<T>& n, double
 
 template <typename T> inline double angle(const T& u, const T& v) {
 	double r2 = sqr(u)*sqr(v);
-	if (std::fabs(r2) >= std::max(std::fabs(sqr(u)), std::fabs(sqr(v)))*std::numeric_limits<T>::epsilon())
+	if (std::abs(boost::math::float_distance(r2, 0.)) < 1)
 		return std::acos(dot(u, v)/std::sqrt(r2));
 	else
 		return 0.;

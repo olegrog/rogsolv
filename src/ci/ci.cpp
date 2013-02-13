@@ -1,3 +1,4 @@
+#include <cmath>
 #include "ci.hpp"
 
 namespace ci {
@@ -27,9 +28,9 @@ namespace ci {
 		double r = std::sqrt(sqr(x));
 		
 		double se = std::sin(e);
-		double ce = std::cos(e);		
+		double ce = std::cos(e);
 		double st = std::sin(theta);
-		double ct = std::cos(theta);		
+		double ct = std::cos(theta);
 		
 		V3d y;
 		if (std::fabs(rxy) > 1E-12) {	

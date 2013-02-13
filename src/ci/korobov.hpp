@@ -3,6 +3,7 @@
 
 #include <cstdlib>
 #include <climits>
+#include <cmath>
 
 namespace korobov {
 

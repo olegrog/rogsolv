@@ -5,8 +5,10 @@
 
 #include <vector>
 #include <cstddef>
+#include <string>
 
 namespace ci {
+	template <typename T> inline T sqr(T x) { return x*x; }
 
 	enum Symmetry {
 		NO_SYMM	= 0,	// нет симметрии
@@ -34,12 +36,14 @@ namespace ci {
 		public:
 			virtual double theta(const Particle& p1, const Particle& p2, double b, double g) const = 0;
 			virtual double bMax(const Particle& p1, const Particle& p2) const = 0;
+			virtual std::string name() const = 0;
 	};
 
 	class HSPotential : public Potential {
 		public:
 			double theta(const Particle& p1, const Particle& p2, double b, double g) const;
 			double bMax(const Particle& p1, const Particle& p2) const;
+			std::string name() const { return "Hard Spheres"; }
 	};
 
 	class LJPotential : public Potential {
@@ -48,6 +52,7 @@ namespace ci {
 					double g_step = 0.1, double r_step = 2.5e-4);
 			double theta(const Particle& p1, const Particle& p2, double b, double g) const;
 			double bMax(const Particle& p1, const Particle& p2) const;
+			std::string name() const { return "Lennard-Jones"; }
 		private:
 			double b_extension;
 			size_t b_size;

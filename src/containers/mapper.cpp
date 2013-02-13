@@ -9,8 +9,6 @@ Mapper& Mapper::instance ()
 	return mapper;
 }
 
-inline real sqr (real x) { return x*x; }
-
 #define FOR_BALL						\
 	for (p.z=0; p.z<2*R; p.z++)				\
 		for (p.y=0; p.y<2*R; p.y++)			\

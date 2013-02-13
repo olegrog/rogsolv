@@ -3,6 +3,7 @@
 
 #include <iostream>
 #include <iomanip>
+#include <boost/math/special_functions/next.hpp>
  
 #include "auxiliary.h"
 
@@ -154,19 +155,14 @@ template<class T> bool operator< (const Vec3<T>& v1, const Vec3<T>& v2)
 {
 	for (int i=0; i<3; i++)
 		if (v1[i] > v2[i]) return false;
-	if (std::abs (v1.z-v2.z) <= std::abs (v1.z)*std::numeric_limits<T>::epsilon ()) return false; else return true;
+	if (std::abs (boost::math::float_distance (v1.z, v2.z)) <= 1) return false; else return true;
 }
 
 template<class T> bool operator> (const Vec3<T>& v1, const Vec3<T>& v2)
 {
 	for (int i=0; i<3; i++)
 		if (v1[i] < v2[i]) return false;
-	if (std::abs (v1.z-v2.z) <= std::abs (v1.z)*std::numeric_limits<T>::epsilon ()) return false; else return true;
-}
-
-template<class T> T sqr (const Vec3<T>& v)
-{ 
-	return v.x*v.x + v.y*v.y + v.z*v.z;
+	if (std::abs (boost::math::float_distance (v1.z, v2.z)) <= 1) return false; else return true;
 }
 
 template<class T> T shear_matrix_product (const Vec3<T>& tau, const Vec3<T>& c)
@@ -183,6 +179,11 @@ template<class T> T dot (const Vec3<T>& v1, const Vec3<T>& v2)
 	for (int i=0; i<3; i++)
 		result += v1[i]*v2[i];
 	return result;
+}
+
+template<class T> T sqr (const Vec3<T>& v)
+{ 
+	return dot (v, v);
 }
 
 #endif
