@@ -6,6 +6,8 @@ usage() {
 	echo -e "Options:"
 	echo -e "\t--verbose, -v"
 	echo -e "\t\tPrint results for each file"
+	echo -e "\t--skip, -s <num>"
+	echo -e "\t\tSkip first <num> values (default = 10)"
 }
 
 while [[ $# -gt 2 ]]; do
@@ -13,6 +15,11 @@ while [[ $# -gt 2 ]]; do
 		--verbose|-v)
 			verbose=1
 			shift
+			;;
+		--skip|-s)
+			[[ -z $2 ]] && { echo "Bad skip number."; usage; exit 1; }
+			skip=$2
+			shift; shift
 			;;
 	esac
 done
@@ -29,10 +36,10 @@ for dir in $(find $path -name VTK); do
 	echo $dir
 	: > $tmp
 	i=0
-	i0=10						# skip first ((i0)) values
+	[[ -z $skip ]] && skip=10
 	for f in $(ls $dir | grep vtk | sort -n); do
 		i=$((i+1))
-		[[ i -le i0 ]] && continue
+		[[ $i -le $skip ]] && continue
 		value=$("$tools/$script" $dir/$f | tail -1 | awk '{print $3}')
 		[[ -n $verbose ]] && { echo "$f $value"; }
 		echo $value >> $tmp			# write to tmp file investigated values

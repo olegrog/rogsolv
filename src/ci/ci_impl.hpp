@@ -163,18 +163,11 @@ namespace ci {
 		}
 		/** (II) подгонка разлетных скоростей к узлам сетки **/
 				
-		std::vector<V3i> stencil8, stencil32;
 		// (x, y, z) скорость, от нее мы будем перебирать все скорости в кубе 
 		V3i xi = xi2i(wxi2, nk_rad2); 
 		
-		// расширенный шаблон (32 точки)
-		for (int s1 = -1; s1 < 3; ++s1)
-			for (int s2 = -1; s2 < 3; ++s2)
-				for (int s3 = -1; s3 < 3; ++s3)
-					if (sqr(s1-0.5)+sqr(s2-0.5)+sqr(s3-0.5) < 3)
-						stencil32.push_back(xi + V3i(s1, s2, s3));
-		
 		// стандартный шаблон (8 точек)
+		std::vector<V3i> stencil8;
 		for (int s1 = 0; s1 < 2; ++s1)
 			for (int s2 = 0; s2 < 2; ++s2)
 				for (int s3 = 0; s3 < 2; ++s3)
@@ -185,10 +178,19 @@ namespace ci {
 		V3i xi2l, xi2m;
 		double r;
 		Select_xilm* method = new Min_delta_p (nk_rad2, m2, sqr(g), u, w);
-		if (!(*method) (stencil8, r, xi2l, xi2m))
+		if (!(*method) (stencil8, r, xi2l, xi2m)) {
+			/** если пара xi2l, xi2m не найдена, то используем расширенный шаблон **/
+			// расширенный шаблон (32 точки)
+			std::vector<V3i> stencil32;
+			for (int s1 = -1; s1 < 3; ++s1)
+				for (int s2 = -1; s2 < 3; ++s2)
+					for (int s3 = -1; s3 < 3; ++s3)
+						if (sqr(s1-0.5)+sqr(s2-0.5)+sqr(s3-0.5) < 3)
+							stencil32.push_back(xi + V3i(s1, s2, s3));
 			if (!(*method) (stencil32, r, xi2l, xi2m)) {
 				ss[6]++; N_nu--; return;
 			}
+		}
 		delete method;
 
 		V3i xi1l = xi1 + xi2 - xi2l;
@@ -207,6 +209,7 @@ namespace ci {
 			ss[8]++;
 
 		node_calc node; 
+		
 		node.r = r;
 
 		node.i1  = xyz2i1(xi1[0], xi1[1], xi1[2]);
@@ -266,10 +269,10 @@ namespace ci {
 			calc_int_node(xi1, xi2, b, e, nk_rad1, nk_rad2, xyz2i1, xyz2i2, m1, m2, a, p1, p2);	
 		}
 
-// 		std::cout << "n_calc = " << nc.size() << " N_nu = " << N_nu << std::endl;
-// 		for (int j = 0; j < 9; j++) 
-// 			std::cout << ss[j] << ',';
-// 		std::cout << std::endl;
+		std::cout << "n_calc = " << nc.size() << " N_nu = " << N_nu << std::endl;
+		for (int j = 0; j < 9; j++) 
+			std::cout << ss[j] << ' ';
+		std::cout << std::endl;
 
 		double B = sqrt(2) * potential->bMax(p1, p2) * static_cast<double>(nk1 * nk2)
 			* std::pow(a, 3) * a / static_cast<double>(N_nu) / 4 * tt;

@@ -187,6 +187,7 @@ void Manager::set_grid (real cut, real knud, int ch_size, Box::Space sp)
 	ci::Potential* potential = new ci::HSPotential ();
 	ci::Symmetry symmetry = ci::NO_SYMM;
 	ci::init (potential, symmetry);
+// 	std::srand (std::time (0));
 	std::srand (1000);
 	
 	printer->var ("Molecular potential", potential->name ());
