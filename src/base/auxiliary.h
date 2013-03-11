@@ -25,4 +25,4 @@ inline Side reflect (Side s) { return side (axis (s), !direction (s)); }
 
 inline real sqr(real x) { return x*x; }
 
-#endif
+#endif // AUXILIARY_H

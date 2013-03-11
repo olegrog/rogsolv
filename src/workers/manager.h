@@ -11,16 +11,16 @@
 
 /** Singleton Manager **/
 class Manager {
-	Box::Space space;														// space axis set
-	Int_vect size;															// size of construction
-	Boxes boxes;															// set of all sorting boxes
-	Set_of_boxes boxes_;													// raw set of boxes
-	int rank;																// current MPI_rank
 	Writer* writer;
 	CI_grider* ci_grider;
 	Timer* timer;
 	Schemer* schemer;
 	const Printer& printer;
+	Box::Space space;														// space axis set
+	Int_vect size;															// size of construction
+	Boxes boxes;															// set of all sorting boxes
+	Set_of_boxes boxes_;													// raw set of boxes
+	int rank;																// current MPI_rank
 	void MPI_distribute ();													// disrtribute boxes between MPI nodes
 	void divide_box (Box*, Axis, int parts);								// divide box along axis
 	void join_boundaries (Box*, Side, Box*, Side);							// connect boxes boundaries

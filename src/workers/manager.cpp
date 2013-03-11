@@ -180,13 +180,8 @@ void Manager::set_grids (real cut, real knud, int ch_size, Box::Space sp)
 }
 
 Manager::Manager () :
-	writer (nullptr), ci_grider (nullptr), timer (nullptr), schemer (nullptr), printer (::printer ())
-{
-	MPI_Comm_rank (MPI_COMM_WORLD, &rank);
-
-// 	std::srand (std::time (0));
-	std::srand (1000);
-}
+	writer (nullptr), ci_grider (nullptr), timer (nullptr), schemer (nullptr), printer (::printer ()),
+	rank (printer.MPI_rank ()) {}
 
 void Manager::set_workers (
 	Writer* writer_,

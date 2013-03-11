@@ -1,10 +1,7 @@
-#include <random>
-#include <functional>			// for std::bind
-#include <algorithm>			// for std::generate
-
 #include "korobov.h"
 #include "../containers/vel_grid.h"
 #include "../workers/printer.h"
+#include "../workers/randomizer.h"
 
 using namespace CI_griders;
 
@@ -52,9 +49,7 @@ Korobov_grid::Korobov_grid (std::size_t size)
 {
 	for (line = 0; coefficients[line][0] < size; ++line);
 	size_ = coefficients[line][0];
-	std::default_random_engine generator (1000);
-	std::uniform_real_distribution<real> distrib (0, 1);
-	std::generate (shift.begin (), shift.end (), std::bind (distrib, generator));
+	for (auto& p : shift) p = randomizer () ();
 }
 
 void Korobov::generate (real time_step)
