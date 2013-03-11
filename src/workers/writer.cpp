@@ -14,7 +14,7 @@
 using namespace Writers;
 
 Writer::Writer () :
-	boxes (manager ().get_boxes ()), MPI_rank (manager ().MPI_rank ()) {}
+	boxes (manager ().get_boxes ()), MPI_rank (printer ().MPI_rank ()) {}
 	
 
 const int precision = 8;	// number of figures in text output (float has 6 precise figures, double - 15)

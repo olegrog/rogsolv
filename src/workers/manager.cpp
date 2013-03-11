@@ -167,24 +167,22 @@ void Manager::set_grids (real cut, real knud, int ch_size, Box::Space sp)
 	Box::H = 1./knud/ch_size;
 	Box::tau = Box::H/sqrt (3)/cut;
 	Vel_grid::set_cut (cut);
-	printer->title ("Space grid");
-	printer->var ("Knudsen number", knud);
-	printer->var ("Coordinate step", Box::H);
-	printer->var ("Time step", 2*Box::tau);
-	printer->title ("Velocity grid");
-	printer->var ("Radius", R);
-	printer->var ("Cutting velocity", cut);
-	printer->title ("Collision integral");
-	printer->var ("Molecular potential", ci::potential->name ());
-	printer->var ("Symmetry", ci::symm);
+	printer.title ("Space grid");
+	printer.var ("Knudsen number", knud);
+	printer.var ("Coordinate step", Box::H);
+	printer.var ("Time step", 2*Box::tau);
+	printer.title ("Velocity grid");
+	printer.var ("Radius", R);
+	printer.var ("Cutting velocity", cut);
+	printer.title ("Collision integral");
+	printer.var ("Molecular potential", ci::potential->name ());
+	printer.var ("Symmetry", ci::symm);
 }
 
 Manager::Manager () :
-	writer (nullptr), ci_grider (nullptr), timer (nullptr), schemer (nullptr), printer (nullptr)
+	writer (nullptr), ci_grider (nullptr), timer (nullptr), schemer (nullptr), printer (::printer ())
 {
-	MPI_Init (0, 0);
 	MPI_Comm_rank (MPI_COMM_WORLD, &rank);
-	printer = new Printer;
 
 // 	std::srand (std::time (0));
 	std::srand (1000);
@@ -209,13 +207,13 @@ void Manager::set_workers (
 
 	ci_grider->set_molecule (1, ci::Particle {1});
 
-	printer->title ("Timings");
+	printer.title ("Timings");
 	timer->info ();
-	printer->title ("Difference scheme");
+	printer.title ("Difference scheme");
 	schemer->info ();
-	printer->title ("Integrate grid");
+	printer.title ("Integrate grid");
 	ci_grider->info ();
-	printer->title ("Writing files");
+	printer.title ("Writing files");
 	writer->info ();
 }
 
@@ -223,7 +221,7 @@ Manager::~Manager ()
 {
 	
 	ci::finalize ();
-	delete schemer; delete timer; delete ci_grider; delete writer; delete printer;
+	delete schemer; delete timer; delete ci_grider; delete writer;
 	for (BI pbox = boxes.begin (); pbox != boxes.end (); ++pbox)
 		delete *pbox;
 	delete Box::init_cond;
@@ -302,15 +300,15 @@ void Manager::MPI_distribute ()
 {
 	int num;																	// number of nodes
 	MPI_Comm_size (MPI_COMM_WORLD, &num);
-	printer->title ("MPI");
-	printer->var ("Number of nodes", num);
+	printer.title ("MPI");
+	printer.var ("Number of nodes", num);
 	int cells = 0;																// total number of cells
 	for (BI pbox = boxes_.begin (); pbox != boxes_.end (); ++pbox)
 		cells += (*pbox)->size ().vol ();
-	printer->var ("Total amount of cells", cells);
+	printer.var ("Total amount of cells", cells);
 	const int average = cells/num;
 	assert (average);
-	printer->var ("Average to MPI_node", average);
+	printer.var ("Average to MPI_node", average);
 	BI_ pbox = boxes_.begin ();
 	while (true) {
 		Box* box = *pbox;
@@ -341,8 +339,8 @@ void Manager::MPI_distribute ()
 			in_MPI.insert (std::make_pair (node_in_MPI, box->MPI_rank ()));		// if MPI_node has free volume add it to "in_MPI"
 	}
 	
-	printer->boxes (boxes);
-	printer->MPI_ranks (boxes);
+	printer.boxes (boxes);
+	printer.MPI_ranks (boxes);
 }
 
 void Manager::init_model ()
@@ -355,8 +353,8 @@ void Manager::init_model ()
 		(*pbox)->coord_ -= dimension[0];										// alignment of coordinates
 	size = dimension[1] - dimension[0];										// setting size of construction
 	
-	printer->title ("Model geometry");
-	printer->var ("Size of construction", size);
+	printer.title ("Model geometry");
+	printer.var ("Size of construction", size);
 		
 	for (BI_ pbox = boxes_.begin (); pbox != boxes_.end (); ++pbox) {
 		boxes.insert (*pbox);
@@ -364,7 +362,7 @@ void Manager::init_model ()
 			if (!space.count (Axis (ax)) && (*pbox)->size () [ax] != 1)
 				throw std::logic_error ("Illegal boxes size. Boxes must have unit size along free axis.");
 	}
-	printer->boxes (boxes);														// print preliminary set of boxes
+	printer.boxes (boxes);														// print preliminary set of boxes
 	boxes.clear ();
 	
 	MPI_distribute ();

@@ -2,13 +2,14 @@
 #include <algorithm>
 
 #include "timer.h"
+#include "printer.h"
 #include "manager.h"
 
 #include <mpi.h>
 
 Timer::Timer (int f, int l, int m, int c)
 	: finish (f), log (l), macro (m), cache (c), counter (0), 
-		printer (manager ().get_printer ())
+		printer (::printer ())
 {
 	nick ("init");
 }

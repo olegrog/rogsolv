@@ -1,6 +1,6 @@
 #include "limiters.h"
 #include "tvd_scheme.h"
-#include "../workers/manager.h"
+#include "../workers/printer.h"
 
 namespace {
 	inline real coeff (Side side) { return (direction (side) == BACKWARD ? 1. : -1.)/sqrt (3)/Vel_grid::cut_vel (); }
@@ -106,6 +106,6 @@ void TVD_scheme<T>::scheme (Box* box)
 template<class T>
 void TVD_scheme<T>::info ()
 { 
-	manager ().get_printer ().var ("Scheme type", "TVD second order");
-	manager ().get_printer ().var ("Limiter", Lmtr::Limiter<T> ().name ());
+	printer ().var ("Scheme type", "TVD second order");
+	printer ().var ("Limiter", Lmtr::Limiter<T> ().name ());
 }

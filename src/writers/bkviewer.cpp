@@ -4,7 +4,7 @@
 #include "boost/filesystem.hpp"
 
 #include "bkviewer.h"
-#include "../workers/manager.h"
+#include "../workers/printer.h"
 
 using namespace Writers;
 
@@ -88,6 +88,6 @@ bool BKViewer::write_result (int time) const
 
 void BKViewer::info () const
 {
-	manager ().get_printer ().var ("Visualization program", "BKViewer"); 
+	printer ().var ("Visualization program", "BKViewer"); 
 }
 

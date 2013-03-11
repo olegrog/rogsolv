@@ -211,7 +211,7 @@ int main (int argc, char *argv[])
 	Mapper::set_radius (16);								// set Vel_grid radius
 	manager ().set_workers (
 		new Writers::ParaView,								// set program for visualization
-		new CI_griders::Random (5e5),						// set integrate grid
+		new CI_griders::Korobov (5e5),						// set integrate grid
 		new Timer (finish, log, macro, cache),				// set timer parameters
 		new TVD_scheme<Lmtr::wide_third>					// set difference scheme
 	);

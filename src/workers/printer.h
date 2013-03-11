@@ -5,10 +5,10 @@
 
 #include "../containers/box.h"
 
+/** Singleton Printer **/
 class Printer {
-	int MPI_rank;
+	int rank;
 public:
-	Printer ();
 	template<class T>
 		void var (const std::string&, T) const;							// print special variable
 	void title (const std::string&) const;									// chapter name
@@ -17,12 +17,21 @@ public:
 	void result (bool) const;												// end of task
 	void boxes (const Boxes&) const;										// print table of boxes
 	void MPI_ranks (const Boxes&) const;									// print map of boxes & MPI_ranks
+	int MPI_rank () const { return rank; }
+	static const Printer& instance () { static Printer p; return p; }
+private:
+	Printer ();
+	Printer (const Printer&);
+	const Printer& operator= (const Printer&);
+	~Printer () {}
 };
+
+inline const Printer& printer () { return Printer::instance (); }
 
 template<class T>
 void Printer::var (const std::string& str, T v) const
 {
-	if (!MPI_rank) std::cout << str << " = " << v << std::endl;
+	if (!rank) std::cout << str << " = " << v << std::endl;
 }
 
 #endif // PRINTER_H

@@ -20,7 +20,7 @@ class Manager {
 	CI_grider* ci_grider;
 	Timer* timer;
 	Schemer* schemer;
-	Printer* printer;
+	const Printer& printer;
 	void MPI_distribute ();													// disrtribute boxes between MPI nodes
 	void divide_box (Box*, Axis, int parts);								// divide box along axis
 	void join_boundaries (Box*, Side, Box*, Side);							// connect boxes boundaries
@@ -58,8 +58,6 @@ public:
 	static Manager& instance () { static Manager m; return m; }
 public:
 	/** procedures for workers **/
-	int MPI_rank () const { return rank; }
-	const Printer& get_printer () const { return *printer; }
 	const Writer& get_writer () const { return *writer; }
 	Boxes& get_boxes () { return boxes; }
 private:

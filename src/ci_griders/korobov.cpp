@@ -4,7 +4,7 @@
 
 #include "korobov.h"
 #include "../containers/vel_grid.h"
-#include "../workers/manager.h"
+#include "../workers/printer.h"
 
 using namespace CI_griders;
 
@@ -67,6 +67,6 @@ void Korobov::generate (real time_step)
 
 void Korobov::info ()
 {
-	manager ().get_printer ().var ("Type", "Korobov");
-	manager ().get_printer ().var ("Number of points", grid.size ());
+	printer ().var ("Type", "Korobov");
+	printer ().var ("Number of points", grid.size ());
 }
