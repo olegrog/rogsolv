@@ -8,10 +8,9 @@
 
 #include "vel_grid.h"
 #include "matrix.h"
-#include "../schemes/difference_scheme.h"
+#include "buffer.h"
+#include "walls.h"
 #include "../base/init_cond.h"
-
-//#include <mpi.h>
 
 struct Features {															// list of calculating macroparameters
 	real dens, temp;														// scalar parameters
@@ -21,7 +20,7 @@ struct Features {															// list of calculating macroparameters
 	Features () { }
 };
 
-// Box - container of the third abstract level
+// Box -- container of the third abstract level
 // it works only with matrixes and return macroparameters
 class Box {
 public:
@@ -29,7 +28,7 @@ public:
 		bool operator() (const Box* box1 , const Box* box2) const
 		{																
 			if (box1->size ().vol () != box2->size ().vol ()) 
-				return box1->size ().vol () < box2->size ().vol ();			// sorting by box volume 
+				return box1->size ().vol () < box2->size ().vol ();		// sorting by box volume 
 			for (int i=0; i<3; i++)
 				if (box1->coord ()[i] != box2->coord ()[i]) 
 					return box1->coord ()[i] < box2->coord ()[i];			// sorting by box coordinate
@@ -89,8 +88,8 @@ public:
 
 // defining new type of sort, because sort by address {Box*} depend on MPI_node
 typedef std::set<Box*, Box::Box_less> Boxes;
-typedef std::set<Box*> Boxes_;
+typedef std::set<Box*> Set_of_boxes;
 typedef Boxes::const_iterator BI;
-typedef Boxes_::const_iterator BI_;
+typedef Set_of_boxes::const_iterator BI_;
 
 #endif

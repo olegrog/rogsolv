@@ -1,7 +1,7 @@
 #ifndef TVD_SCHEME_H
 #define TVD_SCHEME_H
 
-#include "difference_scheme.h"
+#include "../workers/schemer.h"
 #include "limiters.h"
 
 // buffer for TVD scheme
@@ -29,7 +29,7 @@ public:
 	void init_boundary (Box*);
 	~TVD_scheme_impl ();
 private:
-	typedef Difference_scheme::Maxwell_fluxes Maxwell_fluxes;
+	typedef Schemer::Maxwell_fluxes Maxwell_fluxes;
 	Maxwell_fluxes cache1[6], cache2[6];				// cache of maxwell fluxes for all six walls
 	class Write_buffer_before;
 	class Read_buffer_after;
@@ -38,7 +38,7 @@ private:
 };
 
 template<class Limiter>
-class TVD_scheme : public Difference_scheme {
+class TVD_scheme : public Schemer {
 public:
 	void read_buffer_before (Box*) { }
 	void write_buffer_before (Box* box) { pimpl->write_buffer_before (box); }
@@ -48,7 +48,7 @@ public:
 	Buffer* create_buffer (int c, Box* b, Side is, Side at) { return new TVD_buffer (c, b, is, at); }
 	void init_boundary (Box* box) { pimpl->init_boundary (box); }
 	TVD_scheme () : pimpl (new TVD_scheme_impl) { }
-	void info (Printer*);
+	void info ();
 	~TVD_scheme () { delete pimpl; }
 private:
 	TVD_scheme_impl* pimpl;

@@ -15,7 +15,7 @@ namespace ci {
 		Z_SYMM	= 1,	// симметрия по оси z
 		YZ_SYMM = 2		// симметрия по осям y, z 
 	};
-
+	
 	struct Particle {
 		double d;
 	};
@@ -23,10 +23,12 @@ namespace ci {
 		double e;
 	};
 
-	template <typename Map>
+	template <typename Map, typename Integr_grid>
 		int gen(double tt, int c_nd, int nk_rad1, int nk_rad2, 
 			const Map& xyz2i1, const Map& xyz2i2,
-			double a, double m1, double m2, const Particle& p1, const Particle& p2);
+			double a, double m1, double m2,
+			const Particle& p1, const Particle& p2,
+			Integr_grid igrid);
 
 	template <typename F> void iter(F& f1, F& f2);
 
@@ -37,6 +39,7 @@ namespace ci {
 			virtual double theta(const Particle& p1, const Particle& p2, double b, double g) const = 0;
 			virtual double bMax(const Particle& p1, const Particle& p2) const = 0;
 			virtual std::string name() const = 0;
+			virtual ~Potential() {}
 	};
 
 	class HSPotential : public Potential {
@@ -66,8 +69,9 @@ namespace ci {
 			void extentGbToTheta(double g) const;
 	};
 
-	void init(const Potential* p, Symmetry s); 
-
+	extern Symmetry symm;
+	extern const Potential* potential;
+	void init (const Potential* p, Symmetry s);
 }
 
 #include "ci_impl.hpp"

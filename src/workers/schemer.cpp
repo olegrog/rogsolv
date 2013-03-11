@@ -1,12 +1,12 @@
-#include "difference_scheme.h"
+#include "schemer.h"
 
-void Difference_scheme::next_layer (Box* box)
+void Schemer::next_layer (Box* box)
 {
 	mapper ().set_side ();
 	update (box->f->all (), box->F, box->tau/box->H, box->space ());
 }
 
-void Difference_scheme::MPI_exchange (Box* this_box, void (Buffer::* MPI_swap) (int), void (Buffer::* swap) (Box*))
+void Schemer::MPI_exchange (Box* this_box, void (Buffer::* MPI_swap) (int), void (Buffer::* swap) (Box*))
 {
 	for (Box::MPI_Buffer::iterator pbuf = this_box->MPI_buffer ().begin (); pbuf != this_box->MPI_buffer ().end (); ++pbuf) {
 		Buffer* buf = *pbuf;
@@ -20,12 +20,12 @@ void Difference_scheme::MPI_exchange (Box* this_box, void (Buffer::* MPI_swap) (
 	}
 }
 
-void Difference_scheme::MPI_exchange_before (Box* box)
+void Schemer::MPI_exchange_before (Box* box)
 {
 	MPI_exchange (box, &Buffer::MPI_swap_before, &Buffer::swap_before);	
 }
 
-void Difference_scheme::MPI_exchange_after (Box* box)
+void Schemer::MPI_exchange_after (Box* box)
 {
 	MPI_exchange (box, &Buffer::MPI_swap_after, &Buffer::swap_after);	
 }

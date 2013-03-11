@@ -1,7 +1,7 @@
 #ifndef FIRST_SCHEME_H
 #define FIRST_SCHEME_H
 
-#include "difference_scheme.h"
+#include "../workers/schemer.h"
 
 // buffer for first order scheme
 class First_buffer : public Buffer {
@@ -20,7 +20,7 @@ private:
 };
 
 // conservative first order flux scheme
-class First_scheme : public Difference_scheme {
+class First_scheme : public Schemer {
 public:
 	void read_buffer_before (Box*) { }
 	void write_buffer_before (Box*) { }
@@ -29,7 +29,7 @@ public:
 	void scheme (Box*);
 	Buffer* create_buffer (int c, Box* b, Side is, Side at) { return new First_buffer (c, b, is, at); }
 	void init_boundary (Box*);
-	void info (Printer*);
+	void info ();
 	~First_scheme ();
 private:
 	Maxwell_fluxes maxwell_fluxes [6];				// cache of maxwell fluxes for all six walls

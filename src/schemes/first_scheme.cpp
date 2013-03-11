@@ -2,7 +2,7 @@
 #include <stdexcept>
 
 #include "first_scheme.h"
-#include "../workers/printer.h"
+#include "../workers/manager.h"
 #include "../containers/box.h"
 
 struct First_scheme::Interior {
@@ -145,7 +145,7 @@ First_scheme::~First_scheme ()
 			delete p->second;
 }
 
-void First_scheme::info (Printer* printer)
+void First_scheme::info ()
 {
-	printer->var ("Scheme type", "first order"); 
+	manager ().get_printer ().var ("Scheme type", "first order"); 
 }

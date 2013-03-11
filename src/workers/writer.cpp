@@ -6,7 +6,16 @@
 #include <sys/stat.h>
 
 #include "writer.h"
+#include "manager.h"
 #include "../containers/vel_grid.h"
+
+#include "mpi.h"
+
+using namespace Writers;
+
+Writer::Writer () :
+	boxes (manager ().get_boxes ()), MPI_rank (manager ().MPI_rank ()) {}
+	
 
 const int precision = 8;	// number of figures in text output (float has 6 precise figures, double - 15)
 void Writers::write_param (Files_format fmt, std::ofstream& file, real value)
@@ -32,7 +41,7 @@ void Writers::write_param (Files_format fmt, std::ofstream& file, Real_vect valu
 
 // 1) calculate macroparameters from distribution function
 // 2) send data to process with rank 0
-void Writer::macroparameters ()
+void Writer::macroparameters () const
 {
 	MPI_Datatype datatype;
 	MPI_Status status;
@@ -56,14 +65,14 @@ void Writer::add_point (Box* box, const Int_vect& pp)
 	points.insert(std::make_pair (box, pp));
 }
 
-void Writer::write_f (int time)
+void Writer::write_f (int time) const
 {
 	if (points.empty ()) return;
 	std::string dir = "dist_fun";
 	boost::filesystem::create_directory (dir);
 	mapper ().set_side ();
 	int num = 0;
-	for (Proj_points::iterator it = points.begin (); it != points.end (); ++it) {
+	for (Proj_points::const_iterator it = points.begin (); it != points.end (); ++it) {
 		Box* box = it->first;
 		if (MPI_rank != box->MPI_rank ()) continue;
 
@@ -88,7 +97,7 @@ void Writer::write_f (int time)
 	}
 }
 
-bool Writer::save_f (int time)
+bool Writer::save_f (int time) const
 {
 	std::ostringstream filename;
 	filename << "f.cache_" << std::setw (2) << std::setfill('0') << MPI_rank;
@@ -108,7 +117,7 @@ bool Writer::save_f (int time)
 	return true;
 }
 
-bool Writer::load_f (int& time)
+bool Writer::load_f (int& time) const
 {
 	std::ostringstream filename;
 	filename << "f.cache_" << std::setw (2) << std::setfill('0') << MPI_rank;

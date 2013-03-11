@@ -1,20 +1,15 @@
 #ifndef PARAVIEW_H
 #define PARAVIEW_H
 
-#include "writer.h"
-
-class Writer_paraview : public Writer {
-	int points, cells;
-	void prepare_files ();
-public:
-	Writer_paraview (const Boxes& b, int rank) : Writer (b, rank) { }
-	bool write_result (int);
-};
+#include "../workers/writer.h"
 
 namespace Writers {
-	class ParaView : public Writer_creator {
+	class ParaView : public Writer {
+		int points, cells;
+		void prepare_files ();
 	public:
-		pWriter create (const Boxes& b, int r) { return pWriter (new Writer_paraview (b,r)); }
+		bool write_result (int) const;
+		void info () const;
 	};
 }
 

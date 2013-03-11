@@ -1,23 +1,18 @@
 #ifndef BKVIEWER_H
 #define BKVIEWER_H
 
-#include "writer.h"
-
-class Writer_bkviewer : public Writer {
-	Matrix<Map>* map;
-	void write_static (std::ofstream& , Int_vect, int);
-	void build_map ();
-	void prepare_files ();
-public:
-	Writer_bkviewer (const Boxes& b, int rank) : Writer (b, rank) { }
-	bool write_result (int);
-	~Writer_bkviewer ();
-};
+#include "../workers/writer.h"
 
 namespace Writers {
-	class BKViewer : public Writer_creator {
+	class BKViewer : public Writer {
+		Matrix<Map>* map;
+		void write_static (std::ofstream&, Int_vect, int) const;
+		void build_map ();
+		void prepare_files ();
 	public:
-		pWriter create (const Boxes& b, int r) { return pWriter (new Writer_bkviewer (b,r)); }
+		bool write_result (int) const;
+		void info () const;
+		~BKViewer ();
 	};
 }
 

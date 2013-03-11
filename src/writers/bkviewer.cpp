@@ -4,10 +4,11 @@
 #include "boost/filesystem.hpp"
 
 #include "bkviewer.h"
+#include "../workers/manager.h"
 
 using namespace Writers;
 
-void Writer_bkviewer::write_static (std::ofstream& file, Int_vect coord, int type)
+void BKViewer::write_static (std::ofstream& file, Int_vect coord, int type) const
 {
 	Vec3<float> v = Vec3<float> (coord) + 0.5f; v *= static_cast<float> (Box::H);
 	file.write (reinterpret_cast<const char*> (&v), sizeof (Vec3<float>));
@@ -16,7 +17,7 @@ void Writer_bkviewer::write_static (std::ofstream& file, Int_vect coord, int typ
 	file.write (reinterpret_cast<const char*> (&type), sizeof (int));
 }
 
-void Writer_bkviewer::build_map ()
+void BKViewer::build_map ()
 {
 	static Features solid (-1, -1, 0, 0, 0, 0);
 	for (BI pbox = boxes.begin (); pbox != boxes.end (); pbox++) {
@@ -32,7 +33,7 @@ void Writer_bkviewer::build_map ()
 	});
 }
 
-void Writer_bkviewer::prepare_files ()
+void BKViewer::prepare_files ()
 {
 	if (MPI_rank) return;
 	assert (size.vol () > 0);
@@ -51,13 +52,13 @@ void Writer_bkviewer::prepare_files ()
 				write_static (file, Int_vect (l,m,n), map->all () (Int_vect (l,m,n)).type);
 }
 
-Writer_bkviewer::~Writer_bkviewer ()
+BKViewer::~BKViewer ()
 {
 	if (MPI_rank) return;
 	if (map) delete map;
 }
 
-bool Writer_bkviewer::write_result (int time)
+bool BKViewer::write_result (int time) const
 {
 	macroparameters ();
 	if (MPI_rank) return true;
@@ -84,3 +85,9 @@ bool Writer_bkviewer::write_result (int time)
 			}
 	return true;
 }
+
+void BKViewer::info () const
+{
+	manager ().get_printer ().var ("Visualization program", "BKViewer"); 
+}
+

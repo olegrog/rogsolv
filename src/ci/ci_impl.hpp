@@ -5,13 +5,12 @@
 #include <vector>
 #include <algorithm>
 #include <limits>
-#include <boost/math/constants/constants.hpp>
-#include <boost/math/special_functions/next.hpp>
+#include <boost/math/constants/constants.hpp>				// for pi constant
+#include <boost/math/special_functions/next.hpp>			// for float_distance
 
 #include "ci.hpp"
 #include "sse.hpp"
 #include "v.hpp"
-#include "korobov.hpp"
 
 namespace ci {
 
@@ -23,13 +22,8 @@ namespace ci {
 		double r, c;
 	};
 
-	extern int symm;
-
 	extern int N_nu;
 	extern std::vector<node_calc> nc;
-	extern korobov::Grid korobov_grid;
-
-	extern const Potential* potential;
 
 	extern int ss[9];
 	extern const double exact_hit;
@@ -126,7 +120,9 @@ namespace ci {
 	//конечные параметры, которые нужны для вычисления интеграла столкновений
 	template <typename Map>
 	void calc_int_node(V3i xi1, V3i xi2, double b, double e, int nk_rad1, int nk_rad2,
-			Map& xyz2i1, Map& xyz2i2, double m1, double m2, double, const Particle& p1, const Particle& p2) {
+			Map& xyz2i1, Map& xyz2i2, double m1, double m2, double,
+			const Particle& p1, const Particle& p2)
+	{
 
 		V3d rxi1 = i2xi(xi1, nk_rad1);
 		V3d rxi2 = i2xi(xi2, nk_rad2);
@@ -212,6 +208,15 @@ namespace ci {
 		
 		node.r = r;
 
+#ifdef DODSOLVER
+		node.i1  = xyz2i1[ xi1[0]][ xi1[1]][ xi1[2]];
+		node.i1l = xyz2i1[xi1l[0]][xi1l[1]][xi1l[2]];
+		node.i1m = xyz2i1[xi1m[0]][xi1m[1]][xi1m[2]];
+
+		node.i2  = xyz2i2[ xi2[0]][ xi2[1]][ xi2[2]];
+		node.i2l = xyz2i2[xi2l[0]][xi2l[1]][xi2l[2]];
+		node.i2m = xyz2i2[xi2m[0]][xi2m[1]][xi2m[2]];
+#else
 		node.i1  = xyz2i1(xi1[0], xi1[1], xi1[2]);
 		node.i1l = xyz2i1(xi1l[0], xi1l[1], xi1l[2]);
 		node.i1m = xyz2i1(xi1m[0], xi1m[1], xi1m[2]);
@@ -219,60 +224,104 @@ namespace ci {
 		node.i2  = xyz2i2(xi2[0], xi2[1], xi2[2]);
 		node.i2l = xyz2i2(xi2l[0], xi2l[1], xi2l[2]);
 		node.i2m = xyz2i2(xi2m[0], xi2m[1], xi2m[2]);
+#endif
 
-		node.c = std::sqrt(sqr(rxi1/m1 - rxi2/m2)) * b;
+		node.c = std::sqrt(sqr(rxi1/m1 - rxi2/m2));
 
 		nc.push_back(node);
 
 	}
 
-	template <typename Map>
-	int gen(double tt, int k, int nk_rad1, int nk_rad2, const Map& xyz2i1, const Map& xyz2i2, double a, double m1, double m2,
-			const Particle& p1, const Particle& p2) {
+	template <class Grid, class Func>
+	void integrate(int rad1, int rad2, double bmax, Grid igrid, Func ifunc)
+	{
+		for (auto point : igrid) {
+			V3i xi1(toInt(point[2] * rad1 * 2),
+					toInt(point[3] * rad1 * 2),
+					toInt(point[4] * rad1 * 2));
+
+			V3i xi2(toInt(point[5] * rad2 * 2),
+					toInt(point[6] * rad2 * 2),
+					toInt(point[7] * rad2 * 2));
+
+			double b = point[8] * bmax;
+			double e = point[9] * 2*boost::math::constants::pi<double>();
+
+			ifunc(xi1, xi2, b, e);
+		}
+	}
+
+	template <class Map>
+	class Calc_int_node_with_params {
+	public:
+		Calc_int_node_with_params(int rad1, int rad2,
+									const Map& map1, const Map& map2,
+									double m1, double m2,
+									double a,
+									const Particle& p1, const Particle& p2) : 
+			rad1(rad1), rad2(rad2), map1(map1), map2(map2),
+			m1(m1), m2(m2), a(a), p1(p1), p2(p2)
+		{
+		}
+
+		void operator()(V3i xi1, V3i xi2, double b, double e)
+		{
+			calc_int_node(xi1, xi2, b, e, rad1, rad2, map1, map2, m1, m2, a, p1, p2);	
+		}
+	private:
+		int rad1, rad2;
+		const Map& map1;
+		const Map& map2;
+		double m1, m2;
+		double a;
+		const Particle& p1;
+		const Particle& p2;
+	};
+
+	template <typename Map, typename IGrid>
+	int gen(
+		double tt,
+		int nk_rad1, int nk_rad2,
+		const Map& xyz2i1, const Map& xyz2i2,
+		double a, double m1, double m2,
+		const Particle& p1, const Particle& p2,
+		const IGrid& igrid
+	)
+	{
 		size_t nk1 = 0;
 		for (int i1 = 0; i1 < 2*nk_rad1; ++i1)
 			for (int i2 = 0; i2 < 2*nk_rad1; ++i2)
 				for (int i3 = 0; i3 < 2*nk_rad1; ++i3)
+#ifdef DODSOLVER
+					if (xyz2i1[i1][i2][i3] >= 0)
+#else
 					if (xyz2i1(i1, i2, i3) >= 0)
+#endif
 						++nk1;
 		size_t nk2 = 0;
 		for (int i1 = 0; i1 < 2*nk_rad2; ++i1)
 			for (int i2 = 0; i2 < 2*nk_rad2; ++i2)
 				for (int i3 = 0; i3 < 2*nk_rad2; ++i3)
+#ifdef DODSOLVER
+					if (xyz2i2[i1][i2][i3] >= 0)
+#else
 					if (xyz2i2(i1, i2, i3) >= 0)
+#endif
 						++nk2;
 
 		N_nu = 0;
 		memset(ss, 0, sizeof(int) * 9);
 
-		korobov_grid.resize(k);
-
-//		std::cout << korobov_grid.size() << std::endl;
-
 		nc.clear();
 
-		for (korobov::Grid::iterator iter = korobov_grid.begin();
-				iter != korobov_grid.end(); ++iter) {
-			const korobov::Point& point = *iter;
+		/** integrate at igrid **/
+		integrate (nk_rad1, nk_rad2, potential->bMax(p1, p2), igrid,
+			Calc_int_node_with_params<Map> (nk_rad1, nk_rad2, xyz2i1, xyz2i2, m1, m2, a, p1, p2));
 
-			V3i xi1	(	toInt(point[2] * nk_rad1 * 2),
-						toInt(point[3] * nk_rad1 * 2),
-						toInt(point[4] * nk_rad1 * 2)	);	
-
-			V3i xi2	(	toInt(point[5] * nk_rad2 * 2),
-						toInt(point[6] * nk_rad2 * 2),
-						toInt(point[7] * nk_rad2 * 2)	);	
-
-			double b =	point[8] * potential->bMax(p1, p2);
-			double e =	point[9] * 2*boost::math::constants::pi<double>();
-
-			calc_int_node(xi1, xi2, b, e, nk_rad1, nk_rad2, xyz2i1, xyz2i2, m1, m2, a, p1, p2);	
-		}
-
-		std::cout << "n_calc = " << nc.size() << " N_nu = " << N_nu << std::endl;
-		for (int j = 0; j < 9; j++) 
-			std::cout << ss[j] << ' ';
-		std::cout << std::endl;
+// 		std::cout << "n_calc = " << nc.size() << " N_nu = " << N_nu << std::endl;
+// 		for (int j = 0; j < 9; j++) 
+// 			std::cout << ss[j] << ' ';
+// 		std::cout << std::endl;
 
 		double B = sqrt(2) * potential->bMax(p1, p2) * static_cast<double>(nk1 * nk2)
 			* std::pow(a, 3) * a / static_cast<double>(N_nu) / 4 * tt;
@@ -292,7 +341,7 @@ namespace ci {
 
 		std::random_shuffle(nc.begin(), nc.end());
 
-		return korobov_grid.size();
+		return 0;
 	}
 
 	template <typename F>

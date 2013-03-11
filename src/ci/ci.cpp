@@ -3,23 +3,21 @@
 
 namespace ci {
 
-	int symm;
-
 	int N_nu;
 	std::vector<node_calc> nc;
-	korobov::Grid korobov_grid;
-
-	const Potential* potential;
 
 	int ss[9];
 	const double exact_hit = 1e-10;
 
-	void init(const Potential* p, Symmetry s) {
-		potential = p;
-		symm = s;
+	void finalize() {
+		if (potential) delete potential;
 	}
 
-	void finalize() {
+	Symmetry symm;
+	const Potential* potential;
+	void init (const Potential* p, Symmetry s) {
+		potential = p;
+		symm = s;
 	}
 
 	const V3d scatter(const V3d& x, double theta, double e) {

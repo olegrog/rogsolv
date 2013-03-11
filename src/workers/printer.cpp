@@ -1,38 +1,44 @@
 #include <iomanip>
 
 #include "printer.h"
+#include "manager.h"
 
 using namespace std;
 
+Printer::Printer ()
+{
+	MPI_Comm_rank (MPI_COMM_WORLD, &MPI_rank);
+}
+
 const int string_length = 60;
 
-void Printer::title (const string& str)
+void Printer::title (const string& str) const
 {
 	if (MPI_rank) return;
 	int len = (string_length+static_cast<int> (str.size ()))/2;
 	cout << setw (len) << setfill ('-') << str << setw (string_length-len) << "" << setfill (' ') << endl;
 }
 
-void Printer::log (const string& str)
+void Printer::log (const string& str) const
 {
 	if (MPI_rank) return;
 	cout << str << flush;
 }
 
-void Printer::task (const string& str)
+void Printer::task (const string& str) const
 {
 	if (MPI_rank) return;
 	cout << left << setw (string_length-6) << setfill ('.') << str << setfill (' ') << right << flush;
 }
 
-void Printer::result (bool res)
+void Printer::result (bool res) const
 {
 	if (MPI_rank) return;
 	if (res) cout << "..[OK]"; else cout << "[FAIL]";
 	cout << endl << flush;
 }
 
-void Printer::boxes (const Boxes& boxes)
+void Printer::boxes (const Boxes& boxes) const
 {
 	if (MPI_rank) return;
 	Boxes sort_boxes;
@@ -59,7 +65,7 @@ void Printer::boxes (const Boxes& boxes)
 	cout << setw (tab) << "" << setw (len) << setfill ('~') << "" << endl << setfill (' ');
 }
 
-void Printer::MPI_ranks (const Boxes& boxes)
+void Printer::MPI_ranks (const Boxes& boxes) const
 {
 	if (MPI_rank) return;
 	int num;

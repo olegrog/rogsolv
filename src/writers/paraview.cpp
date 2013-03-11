@@ -4,12 +4,13 @@
 #include "boost/filesystem.hpp"
 
 #include "paraview.h"
+#include "../workers/manager.h"
 
 using namespace Writers;
 
-void Writer_paraview::prepare_files ()
+void ParaView::prepare_files ()
 {
-	if (MPI_rank) return;
+	if (manager ().MPI_rank ()) return;
 	assert (size.vol () > 0);
 	cells = 0; points = 0;
 	for (BI pbox = boxes.begin (); pbox != boxes.end (); pbox++) {
@@ -39,11 +40,11 @@ struct Write_cells {
 	}
 };
 
-bool Writer_paraview::write_result (int time)
+bool ParaView::write_result (int time) const
 {
 	const Files_format format = TXT;
 	macroparameters ();
-	if (MPI_rank) return true;
+	if (manager ().MPI_rank ()) return true;
 	std::ostringstream filename;
 	filename << time << "data.vtk";
 	boost::filesystem::path path ("VTK"); path /= filename.str ();
@@ -106,4 +107,10 @@ bool Writer_paraview::write_result (int time)
 		for_each ((*pbox)->features->all (), [format, &file] (const Features& feat) { write_param (format, file, feat.shear); });	
 
 	return true;
+}
+
+void ParaView::info () const
+{
+	manager ().get_printer ().var ("Visualization program", "ParaView"); 
+	manager ().get_printer ().var ("Format files", "ASCII"); 
 }
