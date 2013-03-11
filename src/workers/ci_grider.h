@@ -1,6 +1,8 @@
 #ifndef CI_GRIDER_H
 #define CI_GRIDER_H
 
+#include <array>
+
 #include "../base/auxiliary.h"
 #include "../ci/ci.hpp"
 

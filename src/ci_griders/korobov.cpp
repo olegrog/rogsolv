@@ -55,17 +55,6 @@ Korobov_grid::Korobov_grid (std::size_t size)
 	std::default_random_engine generator (1000);
 	std::uniform_real_distribution<real> distrib (0, 1);
 	std::generate (shift.begin (), shift.end (), std::bind (distrib, generator));
-
-}
-
-Korobov_grid::const_iterator Korobov_grid::begin () const
-{
-	return const_iterator (line, shift, 0);
-}
-
-Korobov_grid::const_iterator Korobov_grid::end () const
-{
-	return const_iterator (line, shift, coefficients[line][0]);
 }
 
 void Korobov::generate (real time_step)
@@ -79,5 +68,5 @@ void Korobov::generate (real time_step)
 void Korobov::info ()
 {
 	manager ().get_printer ().var ("Type", "Korobov");
-	manager ().get_printer ().var ("Number of korobov points", grid.size ());
+	manager ().get_printer ().var ("Number of points", grid.size ());
 }
