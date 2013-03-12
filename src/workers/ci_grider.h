@@ -12,7 +12,7 @@ protected:
 	ci::Particle particle;
 public:
 	virtual void generate (real time_step) = 0;
-	virtual void info () = 0;
+	virtual void info () const = 0;
 	virtual ~CI_grider () {}
 public:
 	void set_molecule (real m, const ci::Particle& p) {

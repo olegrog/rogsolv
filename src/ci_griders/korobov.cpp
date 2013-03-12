@@ -49,6 +49,11 @@ Korobov_grid::Korobov_grid (std::size_t size)
 {
 	for (line = 0; coefficients[line][0] < size; ++line);
 	size_ = coefficients[line][0];
+	update_shift ();
+}	
+
+void Korobov_grid::update_shift ()
+{
 	for (auto& p : shift) p = randomizer () ();
 }
 
@@ -56,11 +61,12 @@ void Korobov::generate (real time_step)
 {
 	int R = mapper ().radius ();
 	double vel_step = Vel_grid::cut_vel () / R;
+	grid.update_shift ();
 	ci::gen (time_step, R, R, mapper (), mapper (), vel_step,
 				mass, mass, particle, particle, grid);
 }
 
-void Korobov::info ()
+void Korobov::info () const
 {
 	printer ().var ("Type", "Korobov");
 	printer ().var ("Number of points", grid.size ());

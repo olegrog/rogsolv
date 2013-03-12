@@ -251,33 +251,6 @@ namespace ci {
 		}
 	}
 
-	template <class Map>
-	class Calc_int_node_with_params {
-	public:
-		Calc_int_node_with_params(int rad1, int rad2,
-									const Map& map1, const Map& map2,
-									double m1, double m2,
-									double a,
-									const Particle& p1, const Particle& p2) : 
-			rad1(rad1), rad2(rad2), map1(map1), map2(map2),
-			m1(m1), m2(m2), a(a), p1(p1), p2(p2)
-		{
-		}
-
-		void operator()(V3i xi1, V3i xi2, double b, double e)
-		{
-			calc_int_node(xi1, xi2, b, e, rad1, rad2, map1, map2, m1, m2, a, p1, p2);	
-		}
-	private:
-		int rad1, rad2;
-		const Map& map1;
-		const Map& map2;
-		double m1, m2;
-		double a;
-		const Particle& p1;
-		const Particle& p2;
-	};
-
 	template <typename Map, typename IGrid>
 	int gen(
 		double tt,
@@ -316,7 +289,9 @@ namespace ci {
 
 		/** integrate at igrid **/
 		integrate (nk_rad1, nk_rad2, potential->bMax(p1, p2), igrid,
-			Calc_int_node_with_params<Map> (nk_rad1, nk_rad2, xyz2i1, xyz2i2, m1, m2, a, p1, p2));
+			[&] (V3i xi1, V3i xi2, double b, double e) {
+				calc_int_node(xi1, xi2, b, e, nk_rad1, nk_rad2, xyz2i1, xyz2i2, m1, m2, a, p1, p2);
+			});
 
 		std::cout << "n_calc = " << nc.size() << " N_nu = " << N_nu << std::endl;
 		for (int j = 0; j < 9; j++) 

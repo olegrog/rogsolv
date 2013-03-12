@@ -28,8 +28,10 @@ namespace CI_griders {
 	class Korobov_grid {
 		std::size_t size_, line;
 		Point shift;
+		std::vector<real> l;
 	public:
 		Korobov_grid (std::size_t size);
+		/** accessors **/
 		std::size_t size () const { return size_; }
 		typedef Korobov_iterator const_iterator;
 		const_iterator begin () const {
@@ -38,15 +40,17 @@ namespace CI_griders {
 		const_iterator end () const {
 			return const_iterator (line, shift, size_);
 		}
+		/** modifiers **/
+		void update_shift ();
 	};
 	
 	/** CI_grider using Korobov grid **/
 	class Korobov : public CI_grider {
-		const Korobov_grid grid;
+		Korobov_grid grid;
 	public:
 		Korobov (std::size_t size) : grid (size) {}
 		void generate (real time_step);
-		void info ();
+		void info () const;
 	};
 
 } // namespace
