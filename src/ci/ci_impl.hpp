@@ -225,10 +225,10 @@ namespace ci {
 				calc_int_node(xi1, xi2, b, e, nk_rad1, nk_rad2, xyz2i1, xyz2i2, m1, m2, a, p1, p2);
 			});
 
-		std::cout << "n_calc = " << nc.size() << " N_nu = " << N_nu << std::endl;
-		for (int j = 0; j < 9; j++) 
-			std::cout << ss[j] << ' ';
-		std::cout << std::endl;
+// 		std::cout << "n_calc = " << nc.size() << " N_nu = " << N_nu << std::endl;
+// 		for (int j = 0; j < 9; j++) 
+// 			std::cout << ss[j] << ' ';
+// 		std::cout << std::endl;
 
 		double B = sqrt(2) * potential->bMax(p1, p2) * static_cast<double>(nk1 * nk2)
 			* std::pow(a, 3) * a / static_cast<double>(N_nu) / 4 * tt;

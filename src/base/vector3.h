@@ -3,7 +3,6 @@
 
 #include <iostream>
 #include <iomanip>
-#include <boost/math/special_functions/next.hpp>
  
 #include "auxiliary.h"
 
@@ -17,6 +16,7 @@ template<class T> struct Vec3 {
 	template<class C> Vec3 (const Vec3<C>& v) : x (static_cast<T> (v.x)), y (static_cast<T> (v.y)), z (static_cast<T> (v.z)) { }
 	Vec3& operator= (const Vec3& v) { x = v.x; y = v.y; z = v.z; return *this; }
 	Vec3& operator/= (const T& t) { x /= t; y /= t; z /= t; return *this; }
+	Vec3& operator/= (const Vec3& v) { x /= v.x; y /= v.y; z /= v.z; return *this; }
 	Vec3& operator*= (const T& t) { x *= t; y *= t; z *= t; return *this; }
 	Vec3& operator*= (const Vec3& v) { x *= v.x; y *= v.y; z *= v.z; return *this; }
 	Vec3& operator+= (const Vec3& v) { x += v.x; y += v.y; z += v.z; return *this; }
@@ -102,6 +102,12 @@ template<class T> Vec3<T> operator/ (const Vec3<T>& v, const T& t)
 	return vec /= t;
 }
 
+template<class T> Vec3<T> operator/ (const Vec3<T>& v1, const Vec3<T>& v2)
+{
+	Vec3<T> vec = v1;
+	return vec /= v2;
+}
+
 template<class T> Vec3<T> operator* (const Vec3<T>& v, const T& t)
 {
 	Vec3<T> vec = v;
@@ -154,15 +160,57 @@ template<class T> bool operator!= (const Vec3<T>& v1, const Vec3<T>& v2)
 template<class T> bool operator< (const Vec3<T>& v1, const Vec3<T>& v2)
 {
 	for (int i=0; i<3; i++)
-		if (v1[i] > v2[i]) return false;
-	if (std::abs (boost::math::float_distance (v1.z, v2.z)) <= 1) return false; else return true;
+		if (v1[i] < v2[i]) return true;
+	return false;
 }
 
 template<class T> bool operator> (const Vec3<T>& v1, const Vec3<T>& v2)
 {
 	for (int i=0; i<3; i++)
+		if (v1[i] > v2[i]) return true;
+	return false;
+}
+
+template<class T> bool operator<= (const Vec3<T>& v1, const Vec3<T>& v2)
+{
+	for (int i=0; i<3; i++)
+		if (v1[i] > v2[i]) return false;
+	return true;
+}
+
+template<class T> bool operator>= (const Vec3<T>& v1, const Vec3<T>& v2)
+{
+	for (int i=0; i<3; i++)
 		if (v1[i] < v2[i]) return false;
-	if (std::abs (boost::math::float_distance (v1.z, v2.z)) <= 1) return false; else return true;
+	return true;
+}
+
+template<class T> bool operator< (const Vec3<T>& v1, const T& t)
+{
+	for (int i=0; i<3; i++)
+		if (v1[i] < t) return true;
+	return false;
+}
+
+template<class T> bool operator> (const Vec3<T>& v1, const T& t)
+{
+	for (int i=0; i<3; i++)
+		if (v1[i] > t) return true;
+	return false;
+}
+
+template<class T> bool operator<= (const Vec3<T>& v1, const T& t)
+{
+	for (int i=0; i<3; i++)
+		if (v1[i] > t) return false;
+	return true;
+}
+
+template<class T> bool operator>= (const Vec3<T>& v1, const T& t)
+{
+	for (int i=0; i<3; i++)
+		if (v1[i] < t) return false;
+	return true;
 }
 
 template<class T> T shear_matrix_product (const Vec3<T>& tau, const Vec3<T>& c)

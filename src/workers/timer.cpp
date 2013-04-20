@@ -35,7 +35,12 @@ bool Timer::begin ()
 		nick ("load_f");
 		printer.title ("Cached distribution function");
 		printer.task ("Loading data");
-		printer.result (manager ().get_writer ().load_f (counter));
+		bool load_f = manager ().get_writer ().load_f (counter);
+		printer.result (load_f);
+		if (!load_f) {
+			printer.task ("Loading macroparameters fields");
+			printer.result (manager ().get_writer ().load_macro ());
+		}
 		printer.var ("Initial time", counter);
 
 		printer.title ("Begin of iterations");

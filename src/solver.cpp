@@ -1,3 +1,6 @@
+#include <boost/math/constants/constants.hpp>				// for pi constant
+#include <cmath>
+
 #include "workers/manager.h"
 #include "containers/box.h"
 #include "ci/ci.hpp"
@@ -115,6 +118,28 @@ void poiseuille ()
 	manager ().alone_box (box);
 }
 
+void ghost ()
+{
+	const real T = 1, rho = 1;
+	const real tau = .5;
+	const int N = 25;
+	const real Kn = 0.05;
+	
+	manager ().set_grids (4.3, Kn, 2*N, {XX, YY});
+	
+	Box::init_cond = new Const_maxwell (T, rho);
+	Box* box = new Box (Int_vect (N, N, 1));
+	// ------------------------- box --------------------------
+	box->set_simple (FRONT, arbitrary_temp_bound ([T,tau] (Real_vect r) { 
+		using boost::math::constants::pi;
+		return T * (1-tau*std::cos (pi<real> ()*r.x));
+	}));
+	box->set_mirror (BACK);
+	box->set_mirror (LEFT);
+	box->set_mirror (RIGHT);
+	manager ().alone_box (box);
+}
+
 void kaskad_knudsen_2d (int num)
 {
 	const int multi = 2;			// 2
@@ -208,10 +233,10 @@ int main (int argc, char *argv[])
 	if (argc>=5) cache = atoi (argv[4]);					// set cache
 
 	/** customize workers **/
-	Mapper::set_radius (16);								// set Vel_grid radius
+	Mapper::set_radius (14);								// set Vel_grid radius
 	manager ().set_workers (
 		new Writers::ParaView,								// set program for visualization
-		new CI_griders::Korobov (5e5),						// set integrate grid
+		new CI_griders::Korobov (5e5),					// set integrate grid
 		new Timer (finish, log, macro, cache),				// set timer parameters
 		new TVD_scheme<Lmtr::wide_third>					// set difference scheme
 	);
@@ -223,11 +248,12 @@ int main (int argc, char *argv[])
 	//tube ();
 	//cube2 ();
 	//poiseuille ();
-	heat_transfer ();
+	//heat_transfer ();
 	//couette ();
 	//shock ();
 	//relax ();
 	//knudsen_slip ();
+	ghost ();
 	
 	/** start simulation **/
 	manager ().init_model ();									// prepare calculations

@@ -17,22 +17,6 @@ void BKViewer::write_static (std::ofstream& file, Int_vect coord, int type) cons
 	file.write (reinterpret_cast<const char*> (&type), sizeof (int));
 }
 
-void BKViewer::build_map ()
-{
-	static Features solid (-1, -1, 0, 0, 0, 0);
-	for (BI pbox = boxes.begin (); pbox != boxes.end (); pbox++) {
-		Box* box = *pbox;
-		for_each (map->volume (box->coord (), box->size ()), box->features->all (), [] (Map& map, Features& feat) {
-			map.type = GAS;
-			map.features = &feat;										// fill gas cells
-		});
-	}
-	for_each (map->all (), [&] (Map& map) {
-		if (map.type == SOLID)
-			map.features = &solid;										// fill solid cells		
-	});
-}
-
 void BKViewer::prepare_files ()
 {
 	if (MPI_rank) return;
@@ -55,7 +39,6 @@ void BKViewer::prepare_files ()
 BKViewer::~BKViewer ()
 {
 	if (MPI_rank) return;
-	if (map) delete map;
 }
 
 bool BKViewer::write_result (int time) const

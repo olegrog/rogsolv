@@ -34,7 +34,7 @@ class Vel_grid {														// velocity grid
 	const Mapper& m;													// reference to mapper
 	std::valarray<real>* v;												// data container
 public:
-	Vel_grid () : 
+	explicit Vel_grid () : 
 		m (mapper ()), v (new std::valarray<real> (m.volume ())) { }	// just allocating memory
 	Vel_grid (real temp, 
 			  real dens, 
@@ -73,8 +73,7 @@ class Half_grid {														// half of velocity grid with constant axis and d
 	std::valarray<real>* v;
 	const Mapper& m;
 public:
-	Half_grid () : m (mapper ()) { v = new std::valarray<real> (m.volume ()/2); }
-//	Half_grid (real temp, Side);
+	explicit Half_grid () : m (mapper ()) { v = new std::valarray<real> (m.volume ()/2); }
 	~Half_grid () { delete v; }
 	template<class T> const Half_grid&  operator= (const Expr<T>&);		// all half_grid operation do by this call
 	const Half_grid& operator= (const Vel_grid&);

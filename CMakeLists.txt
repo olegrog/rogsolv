@@ -9,6 +9,7 @@ set (CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=c++0x -mfpmath=sse -msse2 -pedanti
 aux_source_directory (src library_sources)
 aux_source_directory (src/base library_sources)
 aux_source_directory (src/ci library_sources)
+aux_source_directory (src/ci_griders library_sources)
 aux_source_directory (src/containers library_sources)
 aux_source_directory (src/schemes library_sources)
 aux_source_directory (src/workers library_sources)

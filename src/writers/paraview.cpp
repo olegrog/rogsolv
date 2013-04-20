@@ -12,33 +12,43 @@ void ParaView::prepare_files ()
 {
 	if (printer ().MPI_rank ()) return;
 	assert (size.vol () > 0);
-	cells = 0; points = 0;
-	for (BI pbox = boxes.begin (); pbox != boxes.end (); pbox++) {
-		cells += (*pbox)-> size ().vol ();
-		points += ((*pbox)->size ()+1).vol ();
-	}
+	map = new Matrix<Map> (size);
+	build_map ();
+
+	// fill vectot points
+	std::vector<Int_vect> stencil;
+	for (int s1 = 0; s1 < 2; ++s1)
+		for (int s2 = 0; s2 < 2; ++s2)
+			for (int s3 = 0; s3 < 2; ++s3)
+				stencil.push_back (Int_vect (s1,s2,s3));
+	for (int n=0; n<=map->size ().z; n++)
+		for (int m=0; m<=map->size ().y; m++)
+			for (int l=0; l<=map->size ().x; l++) {
+				bool found = false;
+				Int_vect c (l,m,n);
+				std::for_each (stencil.begin (), stencil.end (), [&] (const Int_vect& s) {
+					Int_vect p = c - s;
+					if (p < 0 || (!(p - map->size ()).vol())) return;
+					if (map->point(p).type == GAS) {
+						map->point(p).vertices.insert (points.size ());
+						found = true;
+					}
+				});
+				if (found)
+					points.push_back (c);
+			}
+
+	// fill vector cells
+	for_each (map->all (), [&] (const Map& map) {
+		if (map.type == GAS) {
+			Cell cell;
+			std::copy (map.vertices.begin (), map.vertices.end (), cell.begin ());
+			cells.push_back (cell);
+		}
+	});
+
 	boost::filesystem::create_directory ("VTK");
 }
-
-struct Write_cells {
-	const Files_format fmt;
-	std::ofstream& file;
-	const Int_vect s;
-	const int curr;
-	Write_cells (Files_format t, std::ofstream& f, Int_vect size, int c) : fmt (t), file (f), s (size), curr (c) { }
-	void operator () (const Features&, Int_vect c)
-	{
-		const int nodes = 8;
-		const int p0 = c.z*s.y*s.x + c.y*s.x+c.x + curr;
-		const int p4 = p0 + s.x*s.y;
-		if (fmt == BIN) {
-			const int data[nodes+1] ={nodes, p0, p0+1, p0+s.x, p0+s.x+1, p4, p4+1, p4+s.x, p4+s.x+1};
-			file.write (reinterpret_cast<const char*> (&data), (nodes+1)*sizeof(int));
-		}
-		if (fmt == TXT) file << nodes << ' ' << p0 << ' ' << p0+1 << ' ' << p0+s.x << ' ' << p0+s.x+1 << ' ' 
-			<< p4 << ' ' << p4+1 << ' ' << p4+s.x << ' ' << p4+s.x+1 << std::endl;
-	}
-};
 
 bool ParaView::write_result (int time) const
 {
@@ -56,55 +66,48 @@ bool ParaView::write_result (int time) const
 	file << "# vtk DataFile Version 3.0\nrogsolv output for iteration number " << time 
 		<< "\n" << fmt << "\nDATASET UNSTRUCTURED_GRID\n";
 	
-	file << "POINTS " << points << " double\n";
-	for (BI pbox = boxes.begin (); pbox != boxes.end (); pbox++)
-		for (int n=0; n<=(*pbox)->size ().z; n++)
-			for (int m=0; m<=(*pbox)->size ().y; m++)
-				for (int l=0; l<=(*pbox)->size ().x; l++) 
-					write_param (format, file, Real_vect ((*pbox)->coord () + Int_vect (l,m,n)) * Box::H);
-					 
-	file << "CELLS " << cells << ' ' << 9*cells << '\n';
-	int current = 0;
-	for (BI pbox = boxes.begin (); pbox != boxes.end (); pbox++) {
-		Int_vect full_size = (*pbox)->size () + 1;
-		for_each_index ((*pbox)->features->all (), Write_cells (format, file, full_size, current));
-		current += full_size.vol ();
-	}
-				
-	file << "CELL_TYPES " << cells << '\n';
-	for (int i=0; i<cells; i++) {
+	file << "POINTS " << points.size () << " double\n";
+	std::for_each (points.begin (), points.end (), [&] (const Int_vect& p) {
+		write_param (format, file, Real_vect (p) * Box::H);
+	});
+
+	file << "CELLS " << cells.size () << ' ' << 9*cells.size () << '\n';
+	std::for_each (cells.begin (), cells.end (), [&] (const Cell& c) {
+		file << 8;
+		std::for_each (c.begin (), c.end (), [&] (int p) {
+			file << ' ' << p;
+		});
+		file << std::endl;
+	});
+	
+	file << "CELL_TYPES " << cells.size () << '\n';
+	for (std::size_t i=0; i<cells.size (); i++) {
 		const int cell_type = 11;
 		if (format == BIN) file.write (reinterpret_cast<const char*> (&cell_type), sizeof (int));
 		if (format == TXT) file << cell_type << '\n';
 	}
 	
-	file << "CELL_DATA " << cells << '\n';
+	file << "CELL_DATA " << cells.size () << '\n';
 	
 	file << "SCALARS temperature double\n";
 	file << "LOOKUP_TABLE default\n";
-	for (BI pbox = boxes.begin (); pbox != boxes.end (); pbox++)
-		for_each ((*pbox)->features->all (), [format, &file] (const Features& feat) { write_param (format, file, feat.temp); });	
+	for_each (map->all (), [&] (const Map& m) { if (m.type == GAS) write_param (format, file, m.features->temp); });
 
 	file << "SCALARS density double\n";
 	file << "LOOKUP_TABLE default\n";
-	for (BI pbox = boxes.begin (); pbox != boxes.end (); pbox++)
-		for_each ((*pbox)->features->all (), [format, &file] (const Features& feat) { write_param (format, file, feat.dens); });	
+	for_each (map->all (), [&] (const Map& m) { if (m.type == GAS) write_param (format, file, m.features->dens); });
 		
 	file << "VECTORS mass_flow double\n";
-	for (BI pbox = boxes.begin (); pbox != boxes.end (); pbox++)
-		for_each ((*pbox)->features->all (), [format, &file] (const Features& feat) { write_param (format, file, feat.flow); });	
+	for_each (map->all (), [&] (const Map& m) { if (m.type == GAS) write_param (format, file, m.features->flow); });
 		
 	file << "VECTORS heat_flow double\n";
-	for (BI pbox = boxes.begin (); pbox != boxes.end (); pbox++)
-		for_each ((*pbox)->features->all (), [format, &file] (const Features& feat) { write_param (format, file, feat.qflow); });	
+	for_each (map->all (), [&] (const Map& m) { if (m.type == GAS) write_param (format, file, m.features->qflow); });
 		
 	file << "VECTORS pressure double\n";
-	for (BI pbox = boxes.begin (); pbox != boxes.end (); pbox++)
-		for_each ((*pbox)->features->all (), [format, &file] (const Features& feat) { write_param (format, file, feat.press); });	
+	for_each (map->all (), [&] (const Map& m) { if (m.type == GAS) write_param (format, file, m.features->press); });
 
 	file << "VECTORS shear_stress double\n";
-	for (BI pbox = boxes.begin (); pbox != boxes.end (); pbox++)
-		for_each ((*pbox)->features->all (), [format, &file] (const Features& feat) { write_param (format, file, feat.shear); });	
+	for_each (map->all (), [&] (const Map& m) { if (m.type == GAS) write_param (format, file, m.features->shear); });
 
 	return true;
 }

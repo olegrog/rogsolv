@@ -3,6 +3,7 @@
 
 #include <vector>
 #include <tuple>
+#include <boost/concept_check.hpp>
 
 #include "buffer.h"
 
@@ -23,21 +24,21 @@ public:
 	virtual ~Wall_grid () { if (grid_) delete grid_; }
 };
 
-struct Wall_mirror : public Wall_real {										// for symmetry planes
+struct Wall_mirror : public Wall_real {									// for symmetry planes
 	~Wall_mirror () { }
 };
 
-struct Wall_simple : public Wall_real {										// simple reflect from wall
+struct Wall_simple : public Wall_real {									// simple reflect from wall
 	const real temp;														// wall temperature
 	const Real_vect speed;													// wall speed
 	std::vector<Half_grid*> maxwells;										// pointer to maxwell grid with the unit of density 
-	Wall_simple (real t, Real_vect s) : temp (t), speed (s) { }
+	Wall_simple (real t, Real_vect s) : temp (t), speed (s) {}
 	~Wall_simple () { }
 	typedef std::tuple <real, Real_vect> Params;
 	Params params () const { return Params (temp, speed); }
 };
 
-struct Wall_box : public Wall {												// for linking boxes
+struct Wall_box : public Wall {											// for linking boxes
 	Buffer& buffer;															// usable buffer for read/write
 	const int read_index, write_index;										// proper package indexes
 	std::vector<Vel_grid*> grids;											// additional cells
@@ -45,7 +46,7 @@ struct Wall_box : public Wall {												// for linking boxes
 	~Wall_box () { } 
 };
 
-class Wall_maxwell : public Wall_grid {										// constant maxwellian distribution at wall
+class Wall_maxwell : public Wall_grid {									// constant maxwellian distribution at wall
 	real temp, dens;														// gas parameters behind the wall
 	bool is_first;
 public:
@@ -91,16 +92,32 @@ public:
 	Real_vect speed (Int_vect, Int_vect) const { return speed_; }
 };
 
-class Linear_temp_bound : public Simple_bound  {								// linear dependence of temperature
+class Linear_temp_bound : public Simple_bound  {							// linear dependence of temperature
 	real t0;
 	Real_vect temp_;
 public:
 	Linear_temp_bound (real tt0, Real_vect t) : t0 (tt0), temp_ (t) { }
-	real temp (Int_vect vec, Int_vect size) const
-	{
+	real temp (Int_vect vec, Int_vect size) const {
 		return t0 + (temp_.x-t0)*(vec.x+.5)/size.x + (temp_.y-t0)*(vec.y+.5)/size.y + (temp_.z-t0)*(vec.z+.5)/size.z;
 	}
 	Real_vect speed (Int_vect, Int_vect) const { return 0; }
 };
+
+template<class Temp>
+class Arbitrary_temp_bound : public Simple_bound  {						// arbitrary dependence of temperature
+	Temp temp_fun;
+public:
+	Arbitrary_temp_bound (const Temp& t) : temp_fun (t) { }
+	real temp (Int_vect vec, Int_vect size) const {
+		return temp_fun ((Real_vect (vec)+.5)/Real_vect (size));
+	}
+	Real_vect speed (Int_vect, Int_vect) const { return 0; }
+};
+
+template<class Temp>
+const Arbitrary_temp_bound<Temp> arbitrary_temp_bound (const Temp& t)
+{
+	return std::move (Arbitrary_temp_bound<Temp> (t));
+}
 
 #endif

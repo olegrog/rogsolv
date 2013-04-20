@@ -13,11 +13,7 @@
 
 using namespace Writers;
 
-Writer::Writer () :
-	boxes (manager ().get_boxes ()), MPI_rank (printer ().MPI_rank ()) {}
-	
-
-const int precision = 8;	// number of figures in text output (float has 6 precise figures, double - 15)
+const int precision = 6;	// number of figures in text output (float has 6 precise figures, double - 15)
 void Writers::write_param (Files_format fmt, std::ofstream& file, real value)
 {
 	if (fmt == BIN) {
@@ -28,7 +24,7 @@ void Writers::write_param (Files_format fmt, std::ofstream& file, real value)
 		file << std::scientific << std::setprecision (precision) << value << std::endl;
 }
 
-void Writers::write_param (Files_format fmt, std::ofstream& file, Real_vect value)
+void Writers::write_param (Files_format fmt, std::ofstream& file, const Real_vect& value)
 {
 	if (fmt == BIN) {
 		Vec3<float> v = value;
@@ -37,6 +33,42 @@ void Writers::write_param (Files_format fmt, std::ofstream& file, Real_vect valu
 	if (fmt == TXT) 
 		file << std::scientific << std::setprecision (precision)
 			<< value.x << ' ' << value.y << ' ' << value.z << std::endl;
+}
+
+void Writers::read_param (Files_format fmt, std::ifstream& file, real& value)
+{
+	if (fmt == BIN) {
+		float v = static_cast<float> (value);
+		file.read (reinterpret_cast<char*> (&v), sizeof (float));
+	} 
+	if (fmt == TXT)
+		file >> value;
+}
+
+void Writers::read_param (Files_format fmt, std::ifstream& file, Real_vect& value)
+{
+	if (fmt == BIN) {
+		Vec3<float> v = value;
+		file.read (reinterpret_cast<char*> (&v), sizeof (Vec3<float>));
+	}
+	if (fmt == TXT) 
+		file >> value.x >> value.y >> value.z;
+}
+
+void Writer::build_map ()
+{
+	static Features solid (-1, -1, 0, 0, 0, 0);
+	for (BI pbox = boxes.begin (); pbox != boxes.end (); pbox++) {
+		Box* box = *pbox;
+		for_each (map->volume (box->coord (), box->size ()), box->features->all (), [] (Map& map, Features& feat) {
+			map.type = GAS;
+			map.features = &feat;										// fill gas cells
+		});
+	}
+	for_each (map->all (), [&] (Map& map) {
+		if (map.type == SOLID)
+			map.features = &solid;										// fill solid cells
+	});
 }
 
 // 1) calculate macroparameters from distribution function
@@ -55,7 +87,7 @@ void Writer::macroparameters () const
 		int package_size = box->size ().vol () * static_cast<int> (sizeof (Features) / sizeof (real));
 		if (MPI_rank && MPI_rank == box->MPI_rank ())					// if (I'm not writer and it's my box)
 			MPI_Send (*box->features, package_size, datatype, 0, 0, MPI_COMM_WORLD);
-		if (!MPI_rank && MPI_rank != box->MPI_rank ()) 					// if (I'm writer and it's not my box)
+		if (!MPI_rank && MPI_rank != box->MPI_rank ()) 				// if (I'm writer and it's not my box)
 			MPI_Recv (*box->features, package_size, datatype, box->MPI_rank (), 0, MPI_COMM_WORLD, &status);
 	}
 }
@@ -67,6 +99,26 @@ void Writer::add_point (Box* box, const Int_vect& pp)
 
 void Writer::write_f (int time) const
 {
+	/** write down macroparameters */
+	if (!MPI_rank) {
+		const Files_format format = TXT;
+		std::string dir = "macro";
+		boost::filesystem::create_directory (dir);
+		boost::filesystem::path path (dir);
+		std::ofstream f_temp ((path/"temp").string ());
+		std::ofstream f_dens ((path/"dens").string ());
+		std::ofstream f_flow ((path/"flow").string ());
+		std::ofstream f_qflow ((path/"qflow").string ());
+		std::ofstream f_shear ((path/"shear").string ());
+		
+		for_each (map->all (), [&] (const Map& m) { if (m.type == GAS) write_param (format, f_temp, m.features->temp); });
+		for_each (map->all (), [&] (const Map& m) { if (m.type == GAS) write_param (format, f_dens, m.features->dens); });
+		for_each (map->all (), [&] (const Map& m) { if (m.type == GAS) write_param (format, f_flow, m.features->flow); });
+		for_each (map->all (), [&] (const Map& m) { if (m.type == GAS) write_param (format, f_qflow, m.features->qflow); });
+		for_each (map->all (), [&] (const Map& m) { if (m.type == GAS) write_param (format, f_shear, m.features->shear); });
+	}
+	
+	/** write down distribution function */
 	if (points.empty ()) return;
 	std::string dir = "dist_fun";
 	boost::filesystem::create_directory (dir);
@@ -135,8 +187,72 @@ bool Writer::load_f (int& time) const
 			file.read (dist.raw_data (), mapper ().volume () * sizeof (real));
 		});
 	}
- 	if (file.eof ()) throw std::runtime_error ("Small cache files");
+	if (file.eof ()) throw std::runtime_error ("Small cache files");
 	file.read (reinterpret_cast<char*> (&num), 1);				// just read 1 byte
- 	if (!file.eof ()) throw std::runtime_error ("Big cache files");
+	if (!file.eof ()) throw std::runtime_error ("Big cache files");
 	return true;
+}
+
+bool Writer::load_macro () const
+{
+	const Files_format format = TXT;
+	std::string dir = "macro";
+	boost::filesystem::path path (dir);
+	if (!boost::filesystem::exists(path)) return false;
+
+	MPI_Datatype datatype;
+	MPI_Status status;
+	if (sizeof (real) == sizeof (double)) datatype = MPI_DOUBLE;
+	if (sizeof (real) == sizeof (float)) datatype = MPI_FLOAT;
+	
+	// load macroparameters from files
+	if (!MPI_rank) {
+		std::ifstream f_temp ((path/"temp").string ());
+		std::ifstream f_dens ((path/"dens").string ());
+		std::ifstream f_flow ((path/"flow").string ());
+		std::ifstream f_qflow ((path/"qflow").string ());
+		std::ifstream f_shear ((path/"shear").string ());
+		
+		for_each (map->all (), [&] (Map& m) { if (m.type == GAS) read_param (format, f_temp, m.features->temp); });
+		for_each (map->all (), [&] (Map& m) { if (m.type == GAS) read_param (format, f_dens, m.features->dens); });
+		for_each (map->all (), [&] (Map& m) { if (m.type == GAS) read_param (format, f_flow, m.features->flow); });
+		for_each (map->all (), [&] (Map& m) { if (m.type == GAS) read_param (format, f_qflow, m.features->qflow); });
+		for_each (map->all (), [&] (Map& m) { if (m.type == GAS) read_param (format, f_shear, m.features->shear); });
+		
+		if (f_temp.eof ()) throw std::runtime_error ("Small macro files");
+		int dummy;
+		f_temp.read (reinterpret_cast<char*> (&dummy), 1);				// just read 1 byte
+		if (!f_temp.eof ()) throw std::runtime_error ("Big macro files");
+
+	}
+	
+	// send them to the appropriate process
+	for (BI pbox = boxes.begin (); pbox != boxes.end (); pbox++) {
+		Box* box = *pbox;
+		int package_size = box->size ().vol () * static_cast<int> (sizeof (Features) / sizeof (real));
+		if (MPI_rank && MPI_rank == box->MPI_rank ())					// if (I'm not writer and it's my box)
+			MPI_Recv (*box->features, package_size, datatype, 0, 0, MPI_COMM_WORLD, &status);
+		if (!MPI_rank && MPI_rank != box->MPI_rank ()) 				// if (I'm writer and it's not my box)
+			MPI_Send (*box->features, package_size, datatype, box->MPI_rank (), 0, MPI_COMM_WORLD);
+	}
+	
+	// update Vel_grid
+	mapper().set_side ();
+	for (BI pbox = boxes.begin (); pbox != boxes.end (); pbox++) {
+		Box* box = *pbox;
+		if (MPI_rank != box->MPI_rank ()) continue;
+		for_each (box->f->all (), box->features->all (), [&] (Vel_grid& grid, const Features& feat) {
+			grid = std::move (Vel_grid (feat.temp, feat.dens, feat.flow/feat.dens));
+		});
+	}
+	
+	return true;
+}
+
+Writer::Writer () :
+	boxes (manager ().get_boxes ()), MPI_rank (printer ().MPI_rank ()), map (nullptr) {}
+
+Writer::~Writer()
+{
+	if (map) delete map;
 }

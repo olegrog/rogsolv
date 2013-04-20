@@ -20,11 +20,11 @@ template<class T> class Slice_iter;
 // ----------------------------- Matrix ---------------------------------
 template<class T> class Matrix {
 	std::valarray<T>* v;
-	const Int_vect size;
+	const Int_vect size_;
 	Matrix (const Matrix&);
 	Matrix& operator= (const Matrix&);
 public:
-	Matrix (Int_vect s) : size (s) { v = new std::valarray<T> (size.vol ()); }
+	Matrix (Int_vect s) : size_ (s) { v = new std::valarray<T> (size_.vol ()); }
 	~Matrix () { delete v; }
 	const T& operator[] (int index) const { return (*v)[index]; }
 	operator T* () { return &((*v)[0]); }			
@@ -35,6 +35,9 @@ public:
 	Slice_iter<T> all () const;
 	Slice_iter<T> bound_rect (Side, Int_vect, Int_vect) const;
 	Slice_iter<T> volume (Int_vect, Int_vect) const;
+	const T& point (Int_vect) const;
+	T& point (Int_vect);
+	const Int_vect& size () const { return size_; }
 	friend class Slice_iter<T>;
 };
 
@@ -89,21 +92,21 @@ template<class T> Slice_iter<T>& Slice_iter<T>::operator= (const T& value)
 
 template<class T> Slice_iter<T> Matrix<T>::layers (Side side, int begin, int end) const
 {
-	const Int_vect stride (1, size.x, size.x*size.y);
-	const int start = stride[axis (side)]*(direction (side) == BACKWARD ? begin : size[axis (side)]-1-end);
-	Int_vect length (size);
+	const Int_vect stride (1, size_.x, size_.x*size_.y);
+	const int start = stride[axis (side)]*(direction (side) == BACKWARD ? begin : size_[axis (side)]-1-end);
+	Int_vect length (size_);
 	length[axis (side)] = end-begin+1;
 	return Slice_iter<T> (*this, Slice (start, length, stride));
 }
 
 template<class T> inline Slice_iter<T> Matrix<T>::layers_from (Side side, int begin) const
 {
-	return layers (side, begin, size[axis (side)]-1);
+	return layers (side, begin, size_[axis (side)]-1);
 }
 
 template<class T> inline Slice_iter<T> Matrix<T>::layers_from_to (Side side, int begin, int end) const
 {
-	return layers (side, begin, size[axis (side)]-1-end);
+	return layers (side, begin, size_[axis (side)]-1-end);
 }
 
 template<class T> inline Slice_iter<T> Matrix<T>::all () const
@@ -118,21 +121,33 @@ template<class T> inline Slice_iter<T> Matrix<T>::layer (Side side, int num) con
 
 template<class T> Slice_iter<T> Matrix<T>::bound_rect (Side side, Int_vect begin, Int_vect end) const
 {
-	const Int_vect stride (1, size.x, size.x*size.y);
+	const Int_vect stride (1, size_.x, size_.x*size_.y);
 	Int_vect length (end-begin);
 	int start = (begin*stride).sum ();
 	length[axis (side)] = 1;
 	start -= begin[axis (side)]*stride[axis (side)];
-	if (direction (side) == FORWARD) start += (size[axis (side)]-1)*stride[axis (side)];
+	if (direction (side) == FORWARD) start += (size_[axis (side)]-1)*stride[axis (side)];
 	return Slice_iter<T> (*this, Slice (start, length, stride));
 }
 
 template<class T> inline Slice_iter<T> Matrix<T>::volume (Int_vect begin, Int_vect dim) const
 {
-	const Int_vect stride (1, size.x, size.x*size.y);
+	const Int_vect stride (1, size_.x, size_.x*size_.y);
 	const int start = (begin*stride).sum ();
 	const Int_vect length (dim);
 	return Slice_iter<T> (*this, Slice (start, length, stride));
+}
+
+template<class T> inline const T& Matrix<T>::point (Int_vect p) const
+{
+	const Int_vect stride (1, size_.x, size_.x*size_.y);
+	return (*v)[(p*stride).sum ()];
+}
+
+template<class T> inline T& Matrix<T>::point (Int_vect p)
+{
+	const Int_vect stride (1, size_.x, size_.x*size_.y);
+	return (*v)[(p*stride).sum ()];
 }
 
 template<class C1, class C2, class F>
